@@ -11,3 +11,9 @@
 *.lai
 *.la
 *.a
+
+# Eclipse CDT
+.settings*/
+
+# Windows thumbnails
+Thumbs.db
