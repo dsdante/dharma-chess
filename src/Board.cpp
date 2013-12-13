@@ -1,5 +1,7 @@
+#include <cmath>
 #include "Board.h"
-/*
+using namespace std;
+
 Board::Board()
 {
 	squares[0][0] = Piece::WRook;
@@ -34,25 +36,165 @@ Board::Board()
 	squares[5][7] = Piece::BBishop;
 	squares[6][7] = Piece::BKnight;
 	squares[7][7] = Piece::BRook;
+
+	whiteToMove = true;
+	whiteKingsideCastlingAvaible = true;
+	whiteQueensideCastlingAvaible = true;
+	blackKingsideCastlingAvaible = true;
+	blackQueensideCastlingAvaible = true;
+	enPassantFile = -1;
 }
 
-bool Board::IsCorrectMove(Square from, Square to)
+bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
 {
-	if (squares[from.column][from.row] == Piece::None)
+	// Check from/to bounds
+	if (fromFile < 0 || fromFile > 7 ||
+		fromRank < 0 || fromRank > 7 ||
+		toFile < 0 || toFile > 7 ||
+		toRank < 0 || toRank > 7)
+	{
+		return false;
+	}
+
+	// Correct piece color
+	const Piece ownColor = whiteToMove ? Piece::White : Piece::Black;
+	if (!(squares[fromFile][fromRank] & ownColor))
 		return false;
 
-	// TODO: implement IsCorrectMove
+	switch(squares[fromFile][fromRank] & ~Piece::White & ~Piece::Black) // strip color
+	{
+	case Piece::Pawn:
+		if (!IsPawnWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+
+	case Piece::Rook:
+		if (!IsRookWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+
+	case Piece::Knight:
+		if (!IsKnightWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+
+	case Piece::Bishop:
+		if (!IsBishopWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+
+	case Piece::Queen:
+		if (!IsQueenWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+
+	case Piece::King:
+		if (!IsKnightWayFree(fromFile, fromRank, toFile, toRank))
+			return false;
+		break;
+	}
+	// TODO: check final position correctness (no check to own king)
 	return true;
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsPawnWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	const int pawnMoveDirection = whiteToMove ? 1 : -1;
+
+	if (fromFile == toFile) // move without capture
+	{
+		if (toRank - fromRank == pawnMoveDirection) // simple move
+			return true;
+		if (toRank - fromRank == 2 * pawnMoveDirection) // 2-square move
+			return squares[fromFile][(fromFile+toFile)/2] == Piece::None;
+		return false;
+	}
+	if (abs(fromFile-toFile) == 1) // capture
+	{
+		if (toRank - fromRank != pawnMoveDirection)
+			return false;
+		const int enPassantRank = whiteToMove ? 5 : 2;
+		return (squares[toFile][toRank] != Piece::None) || (toFile == enPassantFile && toRank == enPassantRank);
+	}
+	return false;
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsRookWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	if (fromFile == toFile)
+	{
+		bool direction = toRank > fromRank ? 1 : -1;
+		for (int rank = fromRank + direction; rank != toRank; rank += direction)
+			if (squares[fromFile][rank] != Piece::None)
+				return false;
+		return true;
+	}
+	if (fromRank == toRank)
+	{
+		bool direction = toFile > fromFile ? 1 : -1;
+		for (int file = fromFile + direction; file != toFile; file += direction)
+			if (squares[file][fromRank] != Piece::None)
+				return false;
+		return true;
+	}
+	return false;
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsKnightWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	return  (abs(toFile-fromFile) == 1 && abs(toRank-fromRank) == 2) ||
+			(abs(toFile-fromFile) == 2 && abs(toRank-fromRank) == 1);
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsBishopWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	if (abs(fromFile-toFile) != abs(fromRank-toRank))
+		return false;
+	int filesDirection = toFile > fromFile ? 1 : -1;
+	int ranksDirection = toRank > fromRank ? 1 : -1;
+	int currentFile = fromFile;
+	int currentRank = fromRank;
+	for (int i = 0; i < abs(toFile - fromFile); i++)
+	{
+		currentFile += filesDirection;
+		currentRank += ranksDirection;
+		if (currentFile == toFile)
+			break;
+		if (squares[currentFile][currentRank] != Piece::None)
+			return false;
+	}
+	return true;
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsQueenWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	return IsRookWayFree(fromFile, fromRank, toFile, toRank) &&
+		 IsBishopWayFree(fromFile, fromRank, toFile, toRank);
+}
+
+// Check that the way is free (regardless final position)
+bool Board::IsKingWayFree(int fromFile, int fromRank, int toFile, int toRank)
+{
+	return (abs(toFile-fromFile)) <= 1 && (abs(toRank-fromRank) <= 1);
 }
 
 // return true if the move is valid
-bool Board::Move(Square from, Square to)
+MoveResult Board::Move(int fromFile, int fromRank, int toFile, int toRank)
 {
-	if(!IsCorrectMove(from, to))
-		return false;
+	if(!IsValidMove(fromFile, fromRank, toFile, toRank))
+		return MoveResult::InvalidMove;
 
-	squares[to.column][to.row] = squares[from.column][from.row];
-	squares[from.column][from.row] = Piece::None;
-	return true;
+	squares[toFile][toRank] = squares[fromFile][fromRank];
+	squares[fromFile][fromRank] = Piece::None;
+	return MoveResult::Default;
 }
-*/
+
+bool Board::IsWhiteToMove()
+{
+	return whiteToMove;
+}

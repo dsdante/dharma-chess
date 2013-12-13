@@ -28,30 +28,43 @@ enum Piece
 	BKnight = Knight | Black,
 	BPawn = Pawn | Black,
 };
-/*
-struct Square
-{
-	unsigned char column;
-	unsigned char row;
 
-	Square(column, row)
-	{
-		if (column < 0 || column > 7 || row < 0 || row > 7)
-			throw "invalid square coordinates";
-		this->column = column;
-		this->row = row;
-	}
+enum MoveResult
+{
+	Default = 0x00,
+
+	IncorrectInput = 0x01,
+	InvalidMove = 0x02,
+
+	WhiteWins = 0x10,
+	BlackWins = 0x20,
+	Draw = 0x40,
 };
 
 class Board
 {
-	bool IsCorrectMove(Square from, Square to);
+private:
+	bool whiteToMove;
+	bool whiteKingsideCastlingAvaible;
+	bool whiteQueensideCastlingAvaible;
+	bool blackKingsideCastlingAvaible;
+	bool blackQueensideCastlingAvaible;
+	int enPassantFile;
+
+	bool IsValidMove	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsPawnWayFree	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsRookWayFree	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsKnightWayFree(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsBishopWayFree(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsQueenWayFree	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsKingWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 
 public:
 	Piece squares[8][8] = { };
 
 	Board();
-	MoveResult Move(Square from, Square to);
+	MoveResult Move(int from, int fromRank, int to, int toRank);
+	bool IsWhiteToMove();
 };
-*/
+
 #endif /* BOARD_H_ */
