@@ -45,7 +45,24 @@ Board::Board()
 	enPassantFile = -1;
 }
 
+bool Board::IsWhiteToMove()
+{
+	return whiteToMove;
+}
+
+// Check that the way is free (regardless final position)
 bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
+{
+	if (squares[fromFile][fromRank] == Piece::None)
+		return false;
+	if (!IsWayFree(fromFile, fromRank, toFile, toRank))
+		return false;
+
+	// Check final position correctness (no check to own king)
+
+}
+
+bool Board::IsWayFree(int fromFile, int fromRank, int toFile, int toRank)
 {
 	// Check from/to bounds
 	if (fromFile < 0 || fromFile > 7 ||
@@ -61,7 +78,9 @@ bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
 	if (!(squares[fromFile][fromRank] & ownColor))
 		return false;
 
-	switch(squares[fromFile][fromRank] & ~Piece::White & ~Piece::Black) // strip color
+	const Piece pieceKind = squares[fromFile][fromRank] & ~Piece::White & ~Piece::Black; // strip color
+
+	switch(pieceKind)
 	{
 	case Piece::Pawn:
 		if (!IsPawnWayFree(fromFile, fromRank, toFile, toRank))
@@ -93,7 +112,6 @@ bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
 			return false;
 		break;
 	}
-	// TODO: check final position correctness (no check to own king)
 	return true;
 }
 
@@ -194,7 +212,25 @@ MoveResult Board::Move(int fromFile, int fromRank, int toFile, int toRank)
 	return MoveResult::Default;
 }
 
-bool Board::IsWhiteToMove()
+bool Board::IsKingChecked(Piece color)
 {
-	return whiteToMove;
+	color &= Piece::White | Piece::Black;
+
+	// Check both kings
+	if (color == Piece::White | Piece::Black)
+		return IsKingChecked(Piece::White) | IsKingChecked(Piece::Black);
+
+	// Find the king
+	int kingFile;
+	int kingRank;
+	for (kingFile = 0; kingFile < 8; kingFile++)
+	for (kingRank = 0; kingRank < 8; kingRank++)
+	{
+		if (squares[kingFile][kingRank] == Piece::King & color)
+			goto kingFound; // break 2 loops
+	}
+	kingFound:
+
+	// TODO: proceed here
 }
+

@@ -52,12 +52,14 @@ private:
 	int enPassantFile;
 
 	bool IsValidMove	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsWayFree		(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsPawnWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsRookWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsKnightWayFree(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsBishopWayFree(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsQueenWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsKingWayFree	(int fromFile, int fromRank, int toFile, int toRank);
+	bool IsKingChecked	(Piece color);
 
 public:
 	Piece squares[8][8] = { };
