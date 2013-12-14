@@ -58,8 +58,16 @@ bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
 	if (!IsWayFree(fromFile, fromRank, toFile, toRank))
 		return false;
 
-	// Check final position correctness (no check to own king)
+	const Piece ownColor = whiteToMove ? Piece::White : Piece::Black;
 
+	const int lastRank = whiteToMove ? 7 : 0;
+	if ((squares[fromFile][fromRank] & Piece::Pawn) && (toRank == lastRank))
+		throw "Pawn promotion is not specified";
+
+	if (IsKingChecked(ownColor))
+		return false;
+
+	// TODO: check castling
 }
 
 bool Board::IsWayFree(int fromFile, int fromRank, int toFile, int toRank)
@@ -198,7 +206,20 @@ bool Board::IsQueenWayFree(int fromFile, int fromRank, int toFile, int toRank)
 // Check that the way is free (regardless final position)
 bool Board::IsKingWayFree(int fromFile, int fromRank, int toFile, int toRank)
 {
-	return (abs(toFile-fromFile)) <= 1 && (abs(toRank-fromRank) <= 1);
+	if ((abs(toFile - fromFile)) <= 1 && (abs(toRank - fromRank) <= 1))
+		return true;
+	// Castling
+	if (abs(toFile - fromFile) == 2)
+	{
+		int direction = (toFile - fromFile) / 2; // +1/-1
+
+		for (int file = fromFile + direction; (file != 0) && (file != 8); file += direction)
+			if (squares[file][fromRank] != Piece::None)
+				return false;
+		if (IsAttacked(fromFile, fromRank) || IsAttacked(fromFile + direction, fromRank))
+			return false;
+	}
+	return false;
 }
 
 // return true if the move is valid
@@ -216,21 +237,28 @@ bool Board::IsKingChecked(Piece color)
 {
 	color &= Piece::White | Piece::Black;
 
-	// Check both kings
-	if (color == Piece::White | Piece::Black)
+	if (color == Piece::White | Piece::Black) // Check both kings
 		return IsKingChecked(Piece::White) | IsKingChecked(Piece::Black);
 
 	// Find the king
+	Piece king = Piece::King & color;
 	int kingFile;
 	int kingRank;
 	for (kingFile = 0; kingFile < 8; kingFile++)
 	for (kingRank = 0; kingRank < 8; kingRank++)
 	{
-		if (squares[kingFile][kingRank] == Piece::King & color)
-			goto kingFound; // break 2 loops
+		if (squares[kingFile][kingRank] == king)
+			return IsAttacked(kingFile, kingRank);
 	}
-	kingFound:
-
-	// TODO: proceed here
 }
 
+bool Board::IsAttacked(int file, int rank, Piece attackerColor)
+{
+	for (int fromFile = 0; fromFile < 8; fromFile++)
+	for (int fromRank = 0; fromRank < 8; fromRank++)
+	{
+		if ((squares[fromFile][fromRank] & attackerColor) && IsWayFree(fromFile, fromRank, file, rank))
+			return true;
+	}
+	return false;
+}

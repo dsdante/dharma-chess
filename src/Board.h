@@ -59,7 +59,8 @@ private:
 	bool IsBishopWayFree(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsQueenWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsKingWayFree	(int fromFile, int fromRank, int toFile, int toRank);
-	bool IsKingChecked	(Piece color);
+	bool IsKingChecked(Piece color);
+	bool IsAttacked(int file, int rank);
 
 public:
 	Piece squares[8][8] = { };
