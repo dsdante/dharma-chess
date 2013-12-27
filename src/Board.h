@@ -51,6 +51,7 @@ private:
 	bool blackQueensideCastlingAvaible;
 	int enPassantFile;
 
+	bool IsValidMove	(int fromFile, int fromRank, int toFile, int toRank, Piece promotionPiece);
 	bool IsValidMove	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsWayFree		(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsPawnWayFree	(int fromFile, int fromRank, int toFile, int toRank);
@@ -60,12 +61,13 @@ private:
 	bool IsQueenWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsKingWayFree	(int fromFile, int fromRank, int toFile, int toRank);
 	bool IsKingChecked(Piece color);
-	bool IsAttacked(int file, int rank);
+	bool IsAttacked(int file, int rank, Piece attackerColor);
 
 public:
 	Piece squares[8][8] = { };
 
 	Board();
+	MoveResult Move(int from, int fromRank, int to, int toRank, Piece promotionPiece);
 	MoveResult Move(int from, int fromRank, int to, int toRank);
 	bool IsWhiteToMove();
 };

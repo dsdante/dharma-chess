@@ -50,9 +50,16 @@ bool Board::IsWhiteToMove()
 	return whiteToMove;
 }
 
-// Check that the way is free (regardless final position)
-bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
+MoveResult Board::Move(int fromFile, int fromRank, int toFile, int toRank, Piece promotionPiece)
 {
+	if (!IsValidMove(fromFile, fromRank, toFile, toRank, promotionPiece))
+		return MoveResult::InvalidMove;
+	squares[fromFile][fromRank]
+}
+
+bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank, Piece promotionPiece)
+{
+	// TODO: cannot promote to king, pawn, or opposite color
 	if (squares[fromFile][fromRank] == Piece::None)
 		return false;
 	if (!IsWayFree(fromFile, fromRank, toFile, toRank))
@@ -62,14 +69,31 @@ bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
 
 	const int lastRank = whiteToMove ? 7 : 0;
 	if ((squares[fromFile][fromRank] & Piece::Pawn) && (toRank == lastRank))
-		throw "Pawn promotion is not specified";
+	{
+		if (promotionPiece == Piece::None)
+			return false;
+	}
+	else
+	{
+		if (promotionPiece != Piece::None)
+			return false;
+	}
 
 	if (IsKingChecked(ownColor))
 		return false;
 
-	// TODO: check castling
+	return true;
 }
 
+bool Board::IsValidMove(int fromFile, int fromRank, int toFile, int toRank)
+{
+	const int lastRank = whiteToMove ? 7 : 0;
+	if ((squares[fromFile][fromRank] & Piece::Pawn) && (toRank == lastRank))
+		throw "Pawn promotion is not specified";
+	return IsValidMove(fromFile, fromRank, toFile, toRank, Piece::None);
+}
+
+// Check that the way is free (regardless final position)
 bool Board::IsWayFree(int fromFile, int fromRank, int toFile, int toRank)
 {
 	// Check from/to bounds
@@ -208,16 +232,20 @@ bool Board::IsKingWayFree(int fromFile, int fromRank, int toFile, int toRank)
 {
 	if ((abs(toFile - fromFile)) <= 1 && (abs(toRank - fromRank) <= 1))
 		return true;
+
 	// Castling
+	const Piece attackerColor = whiteToMove ? Piece::Black : Piece::White;
 	if (abs(toFile - fromFile) == 2)
 	{
-		int direction = (toFile - fromFile) / 2; // +1/-1
+		int direction = (toFile - fromFile) / 2; // +1 or -1
 
 		for (int file = fromFile + direction; (file != 0) && (file != 8); file += direction)
 			if (squares[file][fromRank] != Piece::None)
 				return false;
-		if (IsAttacked(fromFile, fromRank) || IsAttacked(fromFile + direction, fromRank))
+		if (IsAttacked(fromFile, fromRank, attackerColor) || IsAttacked(fromFile + direction, fromRank, attackerColor))
 			return false;
+
+		return true;
 	}
 	return false;
 }
@@ -236,20 +264,22 @@ MoveResult Board::Move(int fromFile, int fromRank, int toFile, int toRank)
 bool Board::IsKingChecked(Piece color)
 {
 	color &= Piece::White | Piece::Black;
+	const Piece attackerColor = (color == Piece::White) ? Piece::Black : Piece::White;
 
 	if (color == Piece::White | Piece::Black) // Check both kings
 		return IsKingChecked(Piece::White) | IsKingChecked(Piece::Black);
 
 	// Find the king
-	Piece king = Piece::King & color;
+	const Piece king = Piece::King & color;
 	int kingFile;
 	int kingRank;
 	for (kingFile = 0; kingFile < 8; kingFile++)
 	for (kingRank = 0; kingRank < 8; kingRank++)
 	{
 		if (squares[kingFile][kingRank] == king)
-			return IsAttacked(kingFile, kingRank);
+			return IsAttacked(kingFile, kingRank, attackerColor);
 	}
+	throw "King not found";
 }
 
 bool Board::IsAttacked(int file, int rank, Piece attackerColor)
