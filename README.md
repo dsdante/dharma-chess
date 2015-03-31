@@ -1,4 +1,4 @@
-DharmaChess
-===========
+Dharma Chess
+============
 
-Simple chess program made in programming practice purpose
+Simple chess program for my C programming practicing
