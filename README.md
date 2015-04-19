@@ -1,5 +1,4 @@
-Dharma Chess
-============
+## Dharma Chess
 
 A simple chess program for my C programming practicing
 
