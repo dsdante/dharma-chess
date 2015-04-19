@@ -31,7 +31,7 @@ enum piece piece_at(const struct game *game, struct square square)
 
 /*
  * Check the destination correctness and the free way to it.
- * We already know that there are no own pieces in the destination.
+ * We already know that there is no own piece in the destination.
  */
 
 bool can_move_pawn(const struct game *game, struct square from, struct square to)
@@ -147,6 +147,9 @@ bool can_move_king(const struct game *game, struct square from, struct square to
         for (int file = from.file + direction; file != rook_file; file += direction)
             if (game->board[file][from.rank] != EMPTY)
                 return false;
+        // cannot castle when checked
+        if (is_checked(game, game->side_to_move))
+            return false;
         // cannot castle over attacked square
         struct game mediate_pos = *game;
         mediate_pos.board[to.file][to.rank] = game->board[from.file][from.rank];
@@ -184,7 +187,7 @@ bool can_move_piece(const struct game *game, struct square from, struct square t
     case KING:
         return can_move_king(game, from, to);
     }
-    assert(false);
+    assert(false && "can_move_piece()");
     return false;
 }
 
@@ -203,8 +206,7 @@ king_found:
     for (square.file = 0; square.file < 8; square.file++) {
         for (square.rank = 0; square.rank < 8; square.rank++) {
             enum piece piece = piece_at(game, square);
-            if ((piece & opp_color) && (can_move_piece(game, square, king)))
-            {
+            if ((piece & opp_color) && (can_move_piece(game, square, king))) {
                 fprintf(stderr, "check from 0x%x at %d %d to %d %d\n",
                         piece, square.file, square.rank, king.file, king.rank);
                 return true;
@@ -219,7 +221,8 @@ king_found:
  * Generic movement restrictions
  */
 
-bool is_legal_move(const struct game *game, struct square from, struct square to)
+bool is_legal_move(const struct game *game, struct square from,
+                   struct square to, enum piece promotion)
 {
     if (from.rank < 0 || from.rank > 7 ||
         from.file < 0 || from.file > 7 ||
@@ -240,6 +243,22 @@ bool is_legal_move(const struct game *game, struct square from, struct square to
     if (!can_move_piece(game, from, to))
         return false;
 
+    // Need promotion
+    int last_rank = (game->side_to_move == WHITE) ? 7 : 0;
+    if ((piece_at(game, from) & PAWN) && (to.rank == last_rank)) {
+        if ((promotion & COLOR_MASK) != game->side_to_move)
+            return false;
+        switch (promotion & PIECE_MASK) {
+        case KNIGHT:
+        case BISHOP:
+        case ROOK:
+        case QUEEN:
+            break;
+        default:
+            return false;
+        }
+    }
+
     // Isn't own king checked?
     struct game new_position = *game;
     new_position.board[to.file][to.rank] = game->board[from.file][from.rank];
@@ -252,7 +271,7 @@ bool is_legal_move(const struct game *game, struct square from, struct square to
 
 bool can_make_any_move(const struct game *game)
 {
-    // not optimal, but that'll do for now
+    // Not optimal, but neither is performance-critical
     struct square from;
     struct square to;
     for (from.file = 0; from.file < 8; from.file++)
@@ -270,7 +289,7 @@ bool can_make_any_move(const struct game *game)
  * returning the result (default, check, checkmate, draw, or illegal move).
  */
 
-enum move_result make_move(struct game *game, struct square from, struct square to)
+enum move_result move(struct game *game, struct from, struct to, enum piece promotion)
 {
     if (!is_legal_move(game, from, to))
         return ILLEGAL;
@@ -307,6 +326,8 @@ enum move_result make_move(struct game *game, struct square from, struct square 
     // move the piece
     game->board[to.file][to.rank] = game->board[from.file][from.rank];
     game->board[from.file][from.rank] = EMPTY;
+    if (promotion != EMPTY)
+        game->board[to.file][to.rank] = (promotion | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
 
     if (!can_make_any_move(game)) {
@@ -318,4 +339,5 @@ enum move_result make_move(struct game *game, struct square from, struct square 
     if (is_checked(game, game->side_to_move))
         return CHECK;
     return DEFAULT;
+
 } 
