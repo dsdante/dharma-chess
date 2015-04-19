@@ -8,7 +8,11 @@
 
 const char log_filename[] = "dchess.log";
 
-int logging_level = 0;
+#ifdef NDEBUG
+int logging_level = 3;
+#else
+int logging_level = 5;
+#endif
 
 void log_print(int level, const char *format, ...)
 {

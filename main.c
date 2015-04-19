@@ -14,15 +14,18 @@ const struct option long_options[] = {
 
 const char usage[] =
     "Dharma Chess v0.0.1\n"
+#ifndef NDEBUG
+    "DEBUG VERSION\n"
+#endif
     "Usage: dchess [OPTION...]\n"
     "  -h, --help               display this help and exit\n"
-    "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 3 (debug)\n"
+    "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)\n"
     "The game is still PvP only. Enter the moves in format \"e2 e4\"";
 
 void run_game()
 {
     puts("Enter moves like e2 e4.");
-    log_print(3, "Game started");
+    log_print(6, "Game started");
     struct game game = setup;
     do {
         if (game.side_to_move == WHITE)
