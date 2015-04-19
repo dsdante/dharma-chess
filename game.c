@@ -41,6 +41,8 @@ bool can_move_pawn(const struct game *game, struct square from, struct square to
 
     // Just move, no capture
     if (from.file == to.file) {
+        if (piece_at(game, to) != EMPTY)
+            return false;
         if (advance == direction && piece_at(game, to) == EMPTY)
             return true;
         if (advance == 2 * direction) {
@@ -279,8 +281,12 @@ bool can_make_any_move(const struct game *game)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++)
+            {
+                fprintf(stderr, "Test move from %d %d to %d %d\n",
+                        from.file, from.rank, to.file, to.rank);
                 if (is_legal_move(game, from, to, QUEEN))
                     return true;
+            }
     return false;
 }
 
