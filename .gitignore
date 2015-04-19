@@ -1,3 +1,4 @@
 dchess
+*.log
 *.o
 *.swp

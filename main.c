@@ -4,21 +4,25 @@
 #include <string.h> 
 
 #include "game.h"
+#include "log.h"
 
 const struct option long_options[] = {
-    { "help", 0, NULL, 'h' },
+    { "help", no_argument, NULL, 'h' },
+    { "log-level", required_argument, NULL, 'l' },
     { },
 };
 
 const char usage[] =
     "Dharma Chess v0.0.1\n"
     "Usage: dchess [OPTION...]\n"
-    "  -h, --help    display this help and exit\n"
+    "  -h, --help               display this help and exit\n"
+    "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 3 (debug)\n"
     "The game is still PvP only. Enter the moves in format \"e2 e4\"";
 
 void run_game()
 {
     puts("Enter moves like e2 e4.");
+    log_print(3, "Game started");
     struct game game = setup;
     do {
         if (game.side_to_move == WHITE)
@@ -63,7 +67,7 @@ int main(int argc, char **argv)
     // Parse the command line arguments
     int arg = 0;
     do {
-        arg = getopt_long(argc, argv, "h", long_options, NULL);
+        arg = getopt_long(argc, argv, "hl:", long_options, NULL);
         switch (arg) {
         case -1:
             break; 
@@ -71,6 +75,10 @@ int main(int argc, char **argv)
         case 'h':
             puts(usage);
             exit(0); 
+
+        case 'l':
+            logging_level = atoi(optarg);
+            break;
 
         default:
             puts(usage);
