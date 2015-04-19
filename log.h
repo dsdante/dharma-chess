@@ -3,6 +3,6 @@
 
 extern int logging_level;
 
-void log_print(int level, const char *fromat, ...);
+void log_print(int level, const char *format, ...);
 
 #endif // LOG_H
