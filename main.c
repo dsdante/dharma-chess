@@ -39,7 +39,7 @@ void run_game()
         to.file = to_line[0] - 'a'; 
         to.rank = to_line[1] - '1';
 
-        enum move_result result = make_move(&game, from, to);
+        enum move_result result = move(&game, from, to, EMPTY);
         if (result == CHECK) {
             puts("Check!");
         } else if (result == CHECKMATE) {

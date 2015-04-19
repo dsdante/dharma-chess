@@ -168,7 +168,7 @@ bool can_move_king(const struct game *game, struct square from, struct square to
 
 bool can_move_piece(const struct game *game, struct square from, struct square to)
 {
-    switch(piece_at(game, from) & PIECE_MASK) {
+    switch(piece_at(game, from) & PIECE_TYPE) {
     case PAWN:
         return can_move_pawn(game, from, to);
 
@@ -233,11 +233,11 @@ bool is_legal_move(const struct game *game, struct square from,
     }
     
     // Must move own piece
-    if ((piece_at(game, from) & COLOR_MASK) != game->side_to_move)
+    if ((piece_at(game, from) & COLOR) != game->side_to_move)
         return false;
 
     // Cannot capture own piece
-    if ((piece_at(game, to) & COLOR_MASK) == game->side_to_move)
+    if ((piece_at(game, to) & COLOR) == game->side_to_move)
         return false;
 
     if (!can_move_piece(game, from, to))
@@ -246,9 +246,9 @@ bool is_legal_move(const struct game *game, struct square from,
     // Need promotion
     int last_rank = (game->side_to_move == WHITE) ? 7 : 0;
     if ((piece_at(game, from) & PAWN) && (to.rank == last_rank)) {
-        if ((promotion & COLOR_MASK) != game->side_to_move)
+        if ((promotion & COLOR) != game->side_to_move)
             return false;
-        switch (promotion & PIECE_MASK) {
+        switch (promotion & PIECE_TYPE) {
         case KNIGHT:
         case BISHOP:
         case ROOK:
@@ -279,7 +279,7 @@ bool can_make_any_move(const struct game *game)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++)
-                if (is_legal_move(game, from, to))
+                if (is_legal_move(game, from, to, QUEEN))
                     return true;
     return false;
 }
@@ -289,9 +289,10 @@ bool can_make_any_move(const struct game *game)
  * returning the result (default, check, checkmate, draw, or illegal move).
  */
 
-enum move_result move(struct game *game, struct from, struct to, enum piece promotion)
+enum move_result move(struct game *game, struct square from, struct square to,
+                      enum piece promotion)
 {
-    if (!is_legal_move(game, from, to))
+    if (!is_legal_move(game, from, to, promotion))
         return ILLEGAL;
 
     // en passant
@@ -327,7 +328,7 @@ enum move_result move(struct game *game, struct from, struct to, enum piece prom
     game->board[to.file][to.rank] = game->board[from.file][from.rank];
     game->board[from.file][from.rank] = EMPTY;
     if (promotion != EMPTY)
-        game->board[to.file][to.rank] = (promotion | game->side_to_move);
+        game->board[to.file][to.rank] = ((promotion & ~COLOR) | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
 
     if (!can_make_any_move(game)) {
@@ -338,6 +339,6 @@ enum move_result move(struct game *game, struct from, struct to, enum piece prom
     }
     if (is_checked(game, game->side_to_move))
         return CHECK;
+        
     return DEFAULT;
-
 } 

@@ -4,19 +4,19 @@
 #include <stdbool.h>
 
 enum piece {
-    EMPTY       = 0x00,
+    EMPTY      = 0x00,
 
-    WHITE       = 0x01,
-    BLACK       = 0x02,
-    COLOR_MASK  = WHITE|BLACK,
+    WHITE      = 0x01,
+    BLACK      = 0x02,
+    COLOR      = WHITE|BLACK,
 
-    PAWN        = 0x04,
-    KNIGHT      = 0x08,
-    BISHOP      = 0x10,
-    ROOK        = 0x20,
-    QUEEN       = 0x40,
-    KING        = 0x80,
-    PIECE_MASK  = PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING,
+    PAWN       = 0x04,
+    KNIGHT     = 0x08,
+    BISHOP     = 0x10,
+    ROOK       = 0x20,
+    QUEEN      = 0x40,
+    KING       = 0x80,
+    PIECE_TYPE = PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING,
 };
 
 enum move_result {
