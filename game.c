@@ -63,6 +63,7 @@ bool can_move_pawn(const struct game *game, struct square from, struct square to
         if (piece_at(game, to) != EMPTY)
             return true;
         int en_passant_rank = (game->side_to_move == WHITE) ? 2 : 5;
+        // FIXME: en passant capture doesn't work
         if (to.file == game->en_passant_file && to.rank == en_passant_rank)
             return true;
         return false;
