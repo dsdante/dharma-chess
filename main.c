@@ -34,6 +34,7 @@ void run_game()
             printf("Black's move: ");
 
         char from_line[256], to_line[256];
+        // TODO: support promotions, make the input format less strict
         int count = scanf("%s %s", &from_line, &to_line);
         if (count != 2 || strlen(from_line) != 2 || strlen(to_line) != 2) {
             puts("Wrong input format.");
