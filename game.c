@@ -209,8 +209,8 @@ king_found:
         for (square.rank = 0; square.rank < 8; square.rank++) {
             enum piece piece = piece_at(game, square);
             if ((piece & opp_color) && (can_move_piece(game, square, king))) {
-                fprintf(stderr, "check from 0x%x at %d %d to %d %d\n",
-                        piece, square.file, square.rank, king.file, king.rank);
+                // fprintf(stderr, "check from 0x%x at %d %d to %d %d\n",
+                //        piece, square.file, square.rank, king.file, king.rank);
                 return true;
             }
         }
@@ -281,12 +281,8 @@ bool can_make_any_move(const struct game *game)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++)
-            {
-                fprintf(stderr, "Test move from %d %d to %d %d\n",
-                        from.file, from.rank, to.file, to.rank);
                 if (is_legal_move(game, from, to, QUEEN))
                     return true;
-            }
     return false;
 }
 
