@@ -327,9 +327,13 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->board[to.file][to.rank] = ((promotion & ~COLOR) | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
 
-    // FIXME: remove a pawn taken en passant
+    // remove a pawn taken en passant
+    if ((piece_at(game, from) & PAWN) && (from.file != to.file) &&
+            (piece_at(game, to) == EMPTY)) {
+        game->board[to.file][from.rank] == EMPTY;
+    }
 
-    // en passant
+    // en passant availability
     game->en_passant_file = -1;
     if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
         log_info("Available en passant at file %c", 'a' + from.file);
