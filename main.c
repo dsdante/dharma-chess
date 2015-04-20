@@ -25,7 +25,7 @@ const char usage[] =
 void run_game()
 {
     puts("Enter moves like e2 e4.");
-    log_print(6, "Game started");
+    log_info("Game started");
     struct game game = setup;
     do {
         if (game.side_to_move == WHITE)

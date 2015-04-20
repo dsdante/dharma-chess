@@ -153,7 +153,7 @@ bool can_move_king(const struct game *game, struct square from, struct square to
         // cannot castle when checked
         if (is_checked(game, game->side_to_move))
             return false;
-        // cannot castle over attacked square
+        // cannot castle over an attacked square
         struct game mediate_pos = *game;
         mediate_pos.board[to.file][to.rank] = game->board[from.file][from.rank];
         mediate_pos.board[from.file][from.rank] = EMPTY;
@@ -210,8 +210,6 @@ king_found:
         for (square.rank = 0; square.rank < 8; square.rank++) {
             enum piece piece = piece_at(game, square);
             if ((piece & opp_color) && (can_move_piece(game, square, king))) {
-                // fprintf(stderr, "check from 0x%x at %d %d to %d %d\n",
-                //        piece, square.file, square.rank, king.file, king.rank);
                 return true;
             }
         }
@@ -298,13 +296,6 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if (!is_legal_move(game, from, to, promotion))
         return ILLEGAL;
 
-    // en passant
-    game->en_passant_file = -1;
-    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
-        log_info("Available en passant at file %c", 'a' + from.file);
-        game->en_passant_file = from.file;
-    }
-
     // disabling castling
     if (from.file == 0 && from.rank == 0)
         game->white_castling_avail &= ~QUEEN;
@@ -335,6 +326,15 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if (promotion != EMPTY)
         game->board[to.file][to.rank] = ((promotion & ~COLOR) | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
+
+    // FIXME: remove a pawn taken en passant
+
+    // en passant
+    game->en_passant_file = -1;
+    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
+        log_info("Available en passant at file %c", 'a' + from.file);
+        game->en_passant_file = from.file;
+    }
 
     if (!can_make_any_move(game)) {
         if (is_checked(game, game->side_to_move))
