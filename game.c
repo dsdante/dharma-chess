@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "game.h"
+#include "log.h"
 
 bool is_checked(const struct game *game, enum piece color);
 
@@ -62,8 +63,7 @@ bool can_move_pawn(const struct game *game, struct square from, struct square to
             return false;
         if (piece_at(game, to) != EMPTY)
             return true;
-        int en_passant_rank = (game->side_to_move == WHITE) ? 2 : 5;
-        // FIXME: en passant capture doesn't work
+        int en_passant_rank = (game->side_to_move == WHITE) ? 5 : 2;
         if (to.file == game->en_passant_file && to.rank == en_passant_rank)
             return true;
         return false;
@@ -300,8 +300,10 @@ enum move_result move(struct game *game, struct square from, struct square to,
 
     // en passant
     game->en_passant_file = -1;
-    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2)
+    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
+        log_info("Available en passant at file %c", 'a' + from.file);
         game->en_passant_file = from.file;
+    }
 
     // disabling castling
     if (from.file == 0 && from.rank == 0)
