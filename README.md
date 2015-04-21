@@ -5,7 +5,7 @@ A simple chess program for my C programming practicing
 To do:
 
   1. Console PvP; indicating illegal moves, checkmates, etc --- Debugging
-  2. Adopt CECP interface
+  2. Implement the [CECP](https://en.wikipedia.org/wiki/Chess_Engine_Communication_Protocol) and [UCI](https://en.wikipedia.org/wiki/Universal_Chess_Interface) interfaces
   3. A simple minimax AI
   4. GUI (as a separate executable)
   5. Network multiplayer
