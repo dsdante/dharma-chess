@@ -8,13 +8,24 @@
 
 const char log_filename[] = "dchess.log";
 
+const char *log_color[] = {
+    ANSI_COLOR_RED,
+    ANSI_COLOR_RED,
+    ANSI_COLOR_RED,
+    ANSI_COLOR_DARK_RED,
+    ANSI_COLOR_DARK_YELLOW,
+    ANSI_COLOR_GREY,
+    ANSI_COLOR_DEFAULT,
+    ANSI_COLOR_DEFAULT,
+};
+
 #ifdef NDEBUG
 int logging_level = 3;
 #else
 int logging_level = 6;
 #endif
 
-void log_print(int level, char *format, va_list args)
+void log_print(int level, const char *format, va_list args)
 {
     char message[2048];
 
@@ -26,13 +37,14 @@ void log_print(int level, char *format, va_list args)
     char buffer[1536];
     vsnprintf(buffer, 1536, format, args);
     strcat(message, buffer);
+    strcat(message, "\n");
 
     if (level <= logging_level)
-        puts(message);
+        fprintf(stderr, "%s%s%s", log_color[level], message, ANSI_COLOR_DEFAULT);
 
     FILE *f;
     f = fopen(log_filename, "a");
-    fprintf(f, "%s\n", message);
+    fputs(message, f);
     fclose(f);
 }
 

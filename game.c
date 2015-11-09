@@ -5,6 +5,7 @@
 #include "game.h"
 #include "log.h"
 
+bool is_attacked(const struct game *game, struct square square);
 bool is_checked(const struct game *game, enum piece color);
 
 // Starting position
@@ -15,6 +16,7 @@ const struct game setup = {
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|QUEEN,  WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|QUEEN  },
         { WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
+        //{ 0,   WHITE|PAWN, 0, 0, WHITE|KING, 0, BLACK|PAWN, BLACK|KING   },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|ROOK,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|ROOK   } },
@@ -35,7 +37,7 @@ enum piece piece_at(const struct game *game, struct square square)
  * We already know that there is no own piece in the destination.
  */
 
-bool can_move_pawn(const struct game *game, struct square from, struct square to)
+bool pawn_has_way(const struct game *game, struct square from, struct square to)
 {
     int direction = (game->side_to_move == WHITE) ? 1 : -1;
     int advance = to.rank - from.rank;
@@ -58,21 +60,19 @@ bool can_move_pawn(const struct game *game, struct square from, struct square to
     }
 
     // Capture
-    if (abs(from.file - to.file) == 1) {
-        if (advance != direction)
-            return false;
-        if (piece_at(game, to) != EMPTY)
-            return true;
-        int en_passant_rank = (game->side_to_move == WHITE) ? 5 : 2;
-        if (to.file == game->en_passant_file && to.rank == en_passant_rank)
-            return true;
+    if (abs(from.file - to.file) != 1)
         return false;
-    }
-
+    if (advance != direction)
+        return false;
+    if (piece_at(game, to) != EMPTY)
+        return true;
+    int en_passant_rank = (game->side_to_move == WHITE) ? 5 : 2;
+    if (to.file == game->en_passant_file && to.rank == en_passant_rank)
+        return true;
     return false;
 }
 
-bool can_move_knight(struct square from, struct square to)
+bool knight_has_way(struct square from, struct square to)
 {
     int file_move = abs(from.file - to.file);
     int rank_move = abs(from.rank - to.rank);
@@ -81,7 +81,7 @@ bool can_move_knight(struct square from, struct square to)
     return false; 
 }
 
-bool can_move_bishop(const struct game *game, struct square from, struct square to)
+bool bishop_has_way(const struct game *game, struct square from, struct square to)
 {
     int file_move = abs(from.file - to.file);
     int rank_move = abs(from.rank - to.rank);
@@ -100,7 +100,7 @@ bool can_move_bishop(const struct game *game, struct square from, struct square 
     return true;
 }
 
-bool can_move_rook(const struct game *game, struct square from, struct square to)
+bool rook_has_way(const struct game *game, struct square from, struct square to)
 {
     if (from.file != to.file || from.rank != to.rank)
         return false;
@@ -122,12 +122,12 @@ bool can_move_rook(const struct game *game, struct square from, struct square to
     return true;
 }
 
-bool can_move_queen(const struct game *game, struct square from, struct square to)
+bool queen_has_way(const struct game *game, struct square from, struct square to)
 {
-    return can_move_bishop(game, from, to) || can_move_rook(game, from, to);
+    return bishop_has_way(game, from, to) || rook_has_way(game, from, to);
 }
 
-bool can_move_king(const struct game *game, struct square from, struct square to)
+bool king_has_way(const struct game *game, struct square from, struct square to)
 {
     int file_move = abs(from.file - to.file);
     int rank_move = abs(from.rank - to.rank);
@@ -145,20 +145,21 @@ bool can_move_king(const struct game *game, struct square from, struct square to
         }
         // free squares
         int direction = (castling_side == KING) ? 1 : -1;
-        int file = from.file + direction;
-        int rook_file = (direction == 1) ? 7 : 0;
+        int rook_file = (castling_side == KING) ? 7 : 0;
+        int rook_move_file = (castling_side == KING) ? 7 : 0;
         for (int file = from.file + direction; file != rook_file; file += direction)
             if (game->board[file][from.rank] != EMPTY)
                 return false;
-        // cannot castle when checked
-        if (is_checked(game, game->side_to_move))
+        // cannot castle when the king, the rook, the new rook position,
+        // or the intermediate king position is checked
+        if (is_attacked(game, (struct square){from.file, from.rank}) ||
+            is_attacked(game, (struct square){from.file + direction, from.rank}) ||
+            is_attacked(game, (struct square){rook_file, from.rank}) ||
+            is_attacked(game, (struct square){rook_move_file, from.rank}))
+        {
             return false;
-        // cannot castle over an attacked square
-        struct game mediate_pos = *game;
-        mediate_pos.board[to.file][to.rank] = game->board[from.file][from.rank];
-        mediate_pos.board[from.file][from.rank] = EMPTY;
-        if (is_checked(&mediate_pos, game->side_to_move))
-            return false;
+        }
+        return true;
     }
 
     if (file_move > 1 || rank_move > 1)
@@ -169,28 +170,46 @@ bool can_move_king(const struct game *game, struct square from, struct square to
     return true;
 }
 
-bool can_move_piece(const struct game *game, struct square from, struct square to)
+bool piece_has_way(const struct game *game, struct square from, struct square to)
 {
     switch(piece_at(game, from) & PIECE_TYPE) {
     case PAWN:
-        return can_move_pawn(game, from, to);
+        return pawn_has_way(game, from, to);
 
     case KNIGHT:
-        return can_move_knight(from, to);
+        return knight_has_way(from, to);
 
     case BISHOP:
-        return can_move_bishop(game, from, to);
+        return bishop_has_way(game, from, to);
 
     case ROOK:
-        return can_move_rook(game, from, to);
+        return rook_has_way(game, from, to);
 
     case QUEEN:
-        return can_move_queen(game, from, to);
+        return queen_has_way(game, from, to);
 
     case KING:
-        return can_move_king(game, from, to);
+        return king_has_way(game, from, to);
     }
-    assert(false && "can_move_piece()");
+    assert(false && "piece_has_way()");
+    return false;
+}
+
+bool is_attacked(const struct game *game, struct square square)
+{
+    assert(piece_at(game, square) != EMPTY && "is_attacked() empty square");
+    enum piece opp_color = ((piece_at(game, square) & COLOR) == WHITE) ? BLACK : WHITE;
+    struct square from;
+    for (from.file = 0; from.file < 8; from.file++) {
+        for (from.rank = 0; from.rank < 8; from.rank++) {
+            enum piece piece = piece_at(game, from);
+            if ((piece & opp_color) && (piece_has_way(game, from, square))) {
+                log_warning("%c%d is attacked by %c%d",
+                    'a' + square.file, 1 + square.rank, 'a' + from.file, 1 + from.rank);
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -200,21 +219,8 @@ bool is_checked(const struct game *game, enum piece color)
     for (king.file = 0; king.file < 8; king.file++)
         for (king.rank = 0; king.rank < 8; king.rank++)
             if (game->board[king.file][king.rank] == (KING | color))
-                goto king_found; // break(2)
-king_found:
-    assert(king.file < 8 && "king not found");
-
-    enum piece opp_color = (color == WHITE) ? BLACK : WHITE;
-    struct square square;
-    for (square.file = 0; square.file < 8; square.file++) {
-        for (square.rank = 0; square.rank < 8; square.rank++) {
-            enum piece piece = piece_at(game, square);
-            if ((piece & opp_color) && (can_move_piece(game, square, king))) {
-                return true;
-            }
-        }
-    }
-
+                return is_attacked(game, king);
+    assert(false && "king not found");
     return false;
 }
 
@@ -230,25 +236,28 @@ bool is_legal_move(const struct game *game, struct square from,
         to.rank   < 0 || to.rank   > 7 ||
         to.file   < 0 || to.file   > 7)
     {
+        log_warning("Can't move out of the board");
         return false;
     }
     
-    // Must move own piece
-    if ((piece_at(game, from) & COLOR) != game->side_to_move)
+    if ((piece_at(game, from) & COLOR) != game->side_to_move) {
+        log_warning("Must move own piece");
         return false;
+    }
 
-    // Cannot capture own piece
-    if ((piece_at(game, to) & COLOR) == game->side_to_move)
+    if ((piece_at(game, to) & COLOR) == game->side_to_move) {
+        //log_warning("Can't capture own piece");
         return false;
+    }
 
-    if (!can_move_piece(game, from, to))
+    if (!piece_has_way(game, from, to)) {
+        //log_warning("No way from %c%d to %c%d",
+        //    'a' + from.file, 1 + from.rank, 'a' + to.file, 1 + to.rank);
         return false;
+    }
 
-    // Need promotion
     int last_rank = (game->side_to_move == WHITE) ? 7 : 0;
     if ((piece_at(game, from) & PAWN) && (to.rank == last_rank)) {
-        if ((promotion & COLOR) != game->side_to_move)
-            return false;
         switch (promotion & PIECE_TYPE) {
         case KNIGHT:
         case BISHOP:
@@ -256,16 +265,26 @@ bool is_legal_move(const struct game *game, struct square from,
         case QUEEN:
             break;
         default:
+            log_warning("Promotion not specified");
             return false;
         }
     }
+    else
+        if (promotion != EMPTY) {
+            //log_warning("Can't promote");
+            return false;
+        }
 
     // Isn't own king checked?
     struct game new_position = *game;
-    new_position.board[to.file][to.rank] = game->board[from.file][from.rank];
+    new_position.board[to.file][to.rank] = piece_at(game, from);
     new_position.board[from.file][from.rank] = EMPTY;
-    if (is_checked(&new_position, game->side_to_move))
+    new_position.side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
+    new_position.en_passant_file = -1;
+    if (is_checked(&new_position, game->side_to_move)) {
+        //log_warning("Can't move into check");
         return false;
+    }
 
     return true;
 }
@@ -280,7 +299,8 @@ bool can_make_any_move(const struct game *game)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++)
-                if (is_legal_move(game, from, to, QUEEN))
+                if (is_legal_move(game, from, to, EMPTY) ||
+                    is_legal_move(game, from, to, QUEEN))
                     return true;
     return false;
 }
