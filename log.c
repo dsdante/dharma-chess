@@ -14,15 +14,15 @@ const char *log_color[] = {
     ANSI_COLOR_RED,
     ANSI_COLOR_DARK_RED,
     ANSI_COLOR_DARK_YELLOW,
-    ANSI_COLOR_GREY,
-    ANSI_COLOR_DEFAULT,
-    ANSI_COLOR_DEFAULT,
+    ANSI_COLOR_DARK_GREEN,
+    ANSI_COLOR_DARK_GREEN,
+    ANSI_COLOR_DARK_GREEN,
 };
 
 #ifdef NDEBUG
 int logging_level = 3;
 #else
-int logging_level = 6;
+int logging_level = 7;
 #endif
 
 void log_print(int level, const char *format, va_list args)
