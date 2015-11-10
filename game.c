@@ -17,16 +17,16 @@ const struct game setup = {
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|QUEEN,  WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|QUEEN  },
-        //{ WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
-        { WHITE|KING,   WHITE|PAWN, 0, BLACK|KING, 0, 0, BLACK|PAWN,   },
+        { WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
+        //{ WHITE|KING,   WHITE|PAWN, 0, BLACK|KING, 0, 0, BLACK|PAWN,   },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|ROOK,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|ROOK   } },
     
     .side_to_move = WHITE,
     .white_castling_avail = KING | QUEEN,
-    //.black_castling_avail = KING | QUEEN,
-    .black_castling_avail = EMPTY,
+    .black_castling_avail = KING | QUEEN,
+    //.black_castling_avail = EMPTY,
     .en_passant_file = -1, 
 };
 
