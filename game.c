@@ -24,9 +24,8 @@ const struct game setup = {
         { WHITE|ROOK,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|ROOK   } },
     
     .side_to_move = WHITE,
-    //.white_castling_avail = KING | QUEEN,
+    .white_castling_avail = KING | QUEEN,
     .black_castling_avail = KING | QUEEN,
-    .black_castling_avail = EMPTY,
     .en_passant_file = -1, 
 };
 
