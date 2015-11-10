@@ -36,8 +36,8 @@ struct game {
 };
 
 struct square {
-    int rank;
     int file;
+    int rank;
 };
 
 extern const struct game setup; // starting position

@@ -1,10 +1,12 @@
 #include <assert.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "game.h"
 #include "log.h"
 
+bool is_attacked_by(const struct game *game, struct square square, enum piece color);
 bool is_attacked(const struct game *game, struct square square);
 bool is_checked(const struct game *game, enum piece color);
 
@@ -15,15 +17,16 @@ const struct game setup = {
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|QUEEN,  WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|QUEEN  },
-        { WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
-        //{ 0,   WHITE|PAWN, 0, 0, WHITE|KING, 0, BLACK|PAWN, BLACK|KING   },
+        //{ WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
+        { WHITE|KING,   WHITE|PAWN, 0, BLACK|KING, 0, 0, BLACK|PAWN,   },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|ROOK,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|ROOK   } },
     
     .side_to_move = WHITE,
     .white_castling_avail = KING | QUEEN,
-    .black_castling_avail = KING | QUEEN,
+    //.black_castling_avail = KING | QUEEN,
+    .black_castling_avail = EMPTY,
     .en_passant_file = -1, 
 };
 
@@ -144,18 +147,19 @@ bool king_has_way(const struct game *game, struct square from, struct square to)
                 return false;
         }
         // free squares
-        int direction = (castling_side == KING) ? 1 : -1;
-        int rook_file = (castling_side == KING) ? 7 : 0;
-        int rook_move_file = (castling_side == KING) ? 7 : 0;
-        for (int file = from.file + direction; file != rook_file; file += direction)
+        int direction = (castling_side == QUEEN) ? -1 : 1;
+		struct square rook = {(castling_side == QUEEN) ? 0 : 7, from.rank};
+		struct square rook_to = {(castling_side == QUEEN) ? 3 : 5, from.rank};
+		enum piece opp_color = (game->side_to_move == WHITE) ? BLACK : WHITE;
+        for (int file = from.file + direction; file != rook.file; file += direction)
             if (game->board[file][from.rank] != EMPTY)
                 return false;
         // cannot castle when the king, the rook, the new rook position,
         // or the intermediate king position is checked
-        if (is_attacked(game, (struct square){from.file, from.rank}) ||
-            is_attacked(game, (struct square){from.file + direction, from.rank}) ||
-            is_attacked(game, (struct square){rook_file, from.rank}) ||
-            is_attacked(game, (struct square){rook_move_file, from.rank}))
+        if (is_attacked(game, from) ||
+            is_attacked(game, rook) ||
+			is_attacked_by(game, to, opp_color) ||
+			is_attacked_by(game, rook_to, opp_color))
         {
             return false;
         }
@@ -195,22 +199,31 @@ bool piece_has_way(const struct game *game, struct square from, struct square to
     return false;
 }
 
-bool is_attacked(const struct game *game, struct square square)
+bool is_attacked_by(const struct game *game, struct square square, enum piece color)
 {
-    assert(piece_at(game, square) != EMPTY && "is_attacked() empty square");
-    enum piece opp_color = ((piece_at(game, square) & COLOR) == WHITE) ? BLACK : WHITE;
     struct square from;
     for (from.file = 0; from.file < 8; from.file++) {
         for (from.rank = 0; from.rank < 8; from.rank++) {
             enum piece piece = piece_at(game, from);
-            if ((piece & opp_color) && (piece_has_way(game, from, square))) {
-                log_warning("%c%d is attacked by %c%d",
+            if ((piece & color) && (piece_has_way(game, from, square))) {
+                log_debug("%c%d is attacked by %c%d",
                     'a' + square.file, 1 + square.rank, 'a' + from.file, 1 + from.rank);
                 return true;
             }
         }
     }
     return false;
+}
+
+bool is_attacked(const struct game *game, struct square square)
+{
+	if (piece_at(game, square) == EMPTY) {
+		log_warning("is_attacked() on empty %c%d", 'a' + square.file, 1 + square.rank);
+		raise(SIGINT);
+	}
+    // assert(piece_at(game, square) != EMPTY && "is_attacked() empty square");
+    enum piece opp_color = ((piece_at(game, square) & COLOR) == WHITE) ? BLACK : WHITE;
+    return is_attacked_by(game, square, opp_color);
 }
 
 bool is_checked(const struct game *game, enum piece color)
@@ -282,7 +295,7 @@ bool is_legal_move(const struct game *game, struct square from,
     new_position.side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
     new_position.en_passant_file = -1;
     if (is_checked(&new_position, game->side_to_move)) {
-        //log_warning("Can't move into check");
+        log_warning("Can't move into check");
         return false;
     }
 
@@ -298,10 +311,13 @@ bool can_make_any_move(const struct game *game)
     for (from.rank = 0; from.rank < 8; from.rank++)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
-            for (to.rank = 0; to.rank < 8; to.rank++)
-                if (is_legal_move(game, from, to, EMPTY) ||
-                    is_legal_move(game, from, to, QUEEN))
+            for (to.rank = 0; to.rank < 8; to.rank++) {
+				enum piece promotion = EMPTY;
+				if ((piece_at(game, from) & PAWN) && (to.rank == 0 || to.rank == 7))
+					promotion = QUEEN;
+                if (is_legal_move(game, from, to, promotion))
                     return true;
+			}
     return false;
 }
 
