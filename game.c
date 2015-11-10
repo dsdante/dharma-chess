@@ -152,9 +152,9 @@ bool king_has_way(const struct game *game, struct square from, struct square to)
         }
         // free squares
         int direction = (castling_side == QUEEN) ? -1 : 1;
-		struct square rook = {(castling_side == QUEEN) ? 0 : 7, from.rank};
-		struct square rook_to = {(castling_side == QUEEN) ? 3 : 5, from.rank};
-		enum piece opp_color = (color == WHITE) ? BLACK : WHITE;
+        struct square rook = {(castling_side == QUEEN) ? 0 : 7, from.rank};
+        struct square rook_to = {(castling_side == QUEEN) ? 3 : 5, from.rank};
+        enum piece opp_color = (color == WHITE) ? BLACK : WHITE;
         for (int file = from.file + direction; file != rook.file; file += direction)
             if (game->board[file][from.rank] != EMPTY)
                 return false;
@@ -162,8 +162,8 @@ bool king_has_way(const struct game *game, struct square from, struct square to)
         // or the intermediate king position is checked
         if (is_attacked(game, from) ||
             is_attacked(game, rook) ||
-			is_attacked_by(game, to, opp_color) ||
-			is_attacked_by(game, rook_to, opp_color))
+            is_attacked_by(game, to, opp_color) ||
+            is_attacked_by(game, rook_to, opp_color))
         {
             return false;
         }
@@ -314,12 +314,12 @@ bool can_make_any_move(const struct game *game)
         if (piece_at(game, from) & game->side_to_move)
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++) {
-				enum piece promotion = EMPTY;
-				if ((piece_at(game, from) & PAWN) && (to.rank == 0 || to.rank == 7))
-					promotion = QUEEN;
+                enum piece promotion = EMPTY;
+                if ((piece_at(game, from) & PAWN) && (to.rank == 0 || to.rank == 7))
+                    promotion = QUEEN;
                 if (is_legal_move(game, from, to, promotion))
                     return true;
-			}
+            }
     return false;
 }
 
