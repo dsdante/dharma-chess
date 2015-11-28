@@ -1,4 +1,5 @@
 dchess
+.fuse_hidden*
 *.log
 *.o
 *.swp
