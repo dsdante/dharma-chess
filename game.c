@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,14 @@
 bool is_attacked_by(const struct game *game, struct square square, enum piece color);
 bool is_attacked(const struct game *game, struct square square);
 bool is_checked(const struct game *game, enum piece color);
+
+const char *move_result_text[] = {
+    "default",
+    "check",
+    "checkmate",
+    "draw",
+    "illegal",
+};
 
 // Starting position
 const struct game setup = {
@@ -389,3 +398,25 @@ enum move_result move(struct game *game, struct square from, struct square to,
         
     return DEFAULT;
 } 
+
+enum move_result parse_move(struct game *game, char *move_str)
+{
+    for (int i = 0; move_str[i]; i++)  // lower case
+        move_str[i] = tolower(move_str[i]);
+
+    // TODO: make the input format less strict
+    struct square from, to;
+    enum piece promotion = EMPTY;
+    from.file = move_str[0] - 'a';
+    from.rank = move_str[1] - '1';
+    to.file = move_str[2] - 'a'; 
+    to.rank = move_str[3] - '1';
+    switch (move_str[4]) {
+    case 'n': promotion = KNIGHT; break;
+    case 'b': promotion = BISHOP; break;
+    case 'r': promotion = ROOK; break;
+    case 'q': promotion = QUEEN; break;
+    }
+
+    return move(game, from, to, promotion);
+}

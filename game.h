@@ -41,8 +41,10 @@ struct square {
 };
 
 extern const struct game setup; // starting position
+extern const char *move_result_text[];
 
 enum move_result move(struct game *game, struct square from,
                       struct square to, enum piece promotion);
-
+enum move_result parse_move(struct game *game, char *move);
+char* move_result_to_string(enum move_result move_result);
 #endif // GAME_H

@@ -6,10 +6,12 @@
 
 #include "game.h"
 #include "log.h"
+#include "test.h"
 
 const struct option long_options[] = {
     { "help", no_argument, NULL, 'h' },
     { "log-level", required_argument, NULL, 'l' },
+    { "test", optional_argument, NULL, 't' },
     { },
 };
 
@@ -21,15 +23,16 @@ const char usage[] =
     "Usage: dchess [OPTION...]\n"
     "  -h, --help               display this help and exit\n"
     "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)\n"
+    "  -t, --test=TEST          run a test or a benchmark (run all by default)\n"
     "The game is still PvP only. Enter the moves in format \"e2 e4\"";
 
 const int max_move_length = 256;
-
 /*
-// Parse fuzzy move format. Examples:
+// Parse fuzzy format. Examples:
 // e2 e4
 // e2-e4
-// B2e
+// Be2
+// Rfe1
 // cd
 // 0-0
 
@@ -105,6 +108,7 @@ enum move_result parse_move(struct game *game, char *str_move)
 void run_game()
 {
     puts("Enter moves like e2e4 or e7e8q (with promotion).");
+    puts("Enter q to quit");
     log_info("Game started");
     struct game game = setup;
     do {
@@ -115,26 +119,9 @@ void run_game()
 
         char move_str[max_move_length];
         fgets(move_str, max_move_length, stdin);
-        for (int i = 0; move_str[i]; i++)  // lower case
-            move_str[i] = tolower(move_str[i]);
         if (move_str[0] == 'q')  // quit
             break;
-
-        // TODO: make the input format less strict
-        struct square from, to;
-        enum piece promotion = EMPTY;
-        from.file = move_str[0] - 'a';
-        from.rank = move_str[1] - '1';
-        to.file = move_str[2] - 'a'; 
-        to.rank = move_str[3] - '1';
-        switch (move_str[4]) {
-        case 'n': promotion = KNIGHT; break;
-        case 'b': promotion = BISHOP; break;
-        case 'r': promotion = ROOK; break;
-        case 'q': promotion = QUEEN; break;
-        }
-
-        enum move_result result = move(&game, from, to, promotion);
+        enum move_result result = parse_move(&game, move_str);
         if (result == CHECK) {
             puts("Check!");
         } else if (result == CHECKMATE) {
@@ -158,7 +145,7 @@ int main(int argc, char **argv)
     // Parse the command line arguments
     int arg = 0;
     do {
-        arg = getopt_long(argc, argv, "hl:", long_options, NULL);
+        arg = getopt_long(argc, argv, "hl:t::", long_options, NULL);
         switch (arg) {
         case -1:
             break; 
@@ -170,6 +157,9 @@ int main(int argc, char **argv)
         case 'l':
             logging_level = atoi(optarg);
             break;
+
+        case 't':
+            exit(test_all());
 
         default:
             puts(usage);
