@@ -22,7 +22,7 @@ const char *log_color[] = {
 #ifdef NDEBUG
 int logging_level = 3;
 #else
-int logging_level = 7;
+int logging_level = 6;
 #endif
 
 void log_print(int level, const char *format, va_list args)

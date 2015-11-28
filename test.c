@@ -43,7 +43,7 @@ int test(const char *test_name, int moves_expected, enum move_result result_expe
     char filename[256] = "tests/";
     strcat(filename, test_name);
     enum move_result result;
-    int number_of_moves = run_raw_file("tests/fool", &result);
+    int number_of_moves = run_raw_file(filename, &result);
     if (number_of_moves < 0) {
         log_err("Test '%s' failed", test_name);
         return -1;
@@ -56,7 +56,7 @@ int test(const char *test_name, int moves_expected, enum move_result result_expe
             moves_expected, number_of_moves);
         return -1;
     } else {
-        log_notice("Test %s passed.", test_name);
+        log_notice("Test '%s' passed.", test_name);
         return 0;
     }
 }
@@ -65,5 +65,6 @@ int test_all()
 {
     int result = 0;
     result -= test("fool", 4, CHECKMATE);
+    result -= test("en_passant", 5, DEFAULT);
     return result;
 }

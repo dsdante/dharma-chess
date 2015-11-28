@@ -306,7 +306,7 @@ bool is_legal_move(const struct game *game, struct square from,
     new_position.side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
     new_position.en_passant_file = -1;
     if (is_checked(&new_position, game->side_to_move)) {
-        log_warning("Can't move into check");
+        log_debug("Can't move into check");
         return false;
     }
 
