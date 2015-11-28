@@ -2,9 +2,9 @@
 
 A simple chess program for my C programming practicing
 
-Usage: dchess [OPTION...]
-  -h, --help               display this help and exit
-  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)
+Usage: dchess [OPTION...]  
+  -h, --help               display this help and exit  
+  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)  
   -t, --test               run tests
 
 To do:
