@@ -2,11 +2,6 @@
 
 A simple chess program for my C programming practicing
 
-Usage: dchess [OPTION...]  
-  -h, --help               display this help and exit  
-  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)  
-  -t, --test               run tests
-
 To do:
 
   1. Console PvP; indicating illegal moves, checkmates, etc --- Debugging
@@ -15,6 +10,8 @@ To do:
   4. GUI (as a separate executable)
   5. Network multiplayer
   6. A more advanced AI (tree pruning, parallelization, etc)
+
+Run `dchess -t` to go through tests
 
 The common chess terminology (just in case):
 
