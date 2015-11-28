@@ -367,6 +367,13 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->board[0][from.rank] = EMPTY;
     }
 
+    // en passant availability
+    game->en_passant_file = -1;
+    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
+        log_debug("Available en passant at file %c", 'a' + from.file);
+        game->en_passant_file = from.file;
+    }
+
     // move the piece
     game->board[to.file][to.rank] = game->board[from.file][from.rank];
     game->board[from.file][from.rank] = EMPTY;
@@ -378,13 +385,6 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if ((piece_at(game, from) & PAWN) && (from.file != to.file) &&
             (piece_at(game, to) == EMPTY)) {
         game->board[to.file][from.rank] == EMPTY;
-    }
-
-    // en passant availability
-    game->en_passant_file = -1;
-    if ((piece_at(game, from) & PAWN) && abs(from.rank - to.rank) == 2) {
-        log_info("Available en passant at file %c", 'a' + from.file);
-        game->en_passant_file = from.file;
     }
 
     if (!can_make_any_move(game)) {

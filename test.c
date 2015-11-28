@@ -29,6 +29,8 @@ int run_raw_file(const char *filename, enum move_result *result)
         puts(move); 
         *result = parse_move(&game, move);
         number_of_moves++;
+        if (*result != DEFAULT)
+            puts(move_result_text[*result]);
         if (*result == ILLEGAL || *result == CHECKMATE || *result == DRAW)
             break;
     }

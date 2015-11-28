@@ -23,7 +23,7 @@ const char usage[] =
     "Usage: dchess [OPTION...]\n"
     "  -h, --help               display this help and exit\n"
     "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)\n"
-    "  -t, --test=TEST          run a test or a benchmark (run all by default)\n"
+    "  -t, --test               run tests\n"
     "The game is still PvP only. Enter the moves in format \"e2 e4\"";
 
 const int max_move_length = 256;
