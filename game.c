@@ -35,7 +35,8 @@ const struct game setup = {
     .side_to_move = WHITE,
     .white_castling_avail = KING | QUEEN,
     .black_castling_avail = KING | QUEEN,
-    .en_passant_file = -1, 
+    .en_passant_file = -1,
+    .halfmove_clock = 0,
 };
 
 enum piece piece_at(const struct game *game, struct square square)
@@ -374,12 +375,17 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->en_passant_file = from.file;
     }
 
+    // reset halfmove clock
+    if (piece_at(game, from) & PAWN || piece_at(game, to) != EMPTY)
+        game->halfmove_clock = 0;
+
     // move the piece
     game->board[to.file][to.rank] = game->board[from.file][from.rank];
     game->board[from.file][from.rank] = EMPTY;
     if (promotion != EMPTY)
         game->board[to.file][to.rank] = ((promotion & ~COLOR) | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
+    game->halfmove_clock++;
 
     // remove a pawn taken en passant
     if ((piece_at(game, from) & PAWN) && (from.file != to.file) &&
@@ -387,6 +393,8 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->board[to.file][from.rank] == EMPTY;
     }
 
+    if (game->halfmove_clock == 100)
+        return DRAW;
     if (!can_make_any_move(game)) {
         if (is_checked(game, game->side_to_move))
             return CHECKMATE;

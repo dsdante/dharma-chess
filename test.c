@@ -26,14 +26,15 @@ int run_raw_file(const char *filename, enum move_result *result)
     struct game game = setup;
     char move[6];
     while (fscanf(file, "%5s", move) == 1) {
-        puts(move); 
+        printf("%s ", move); 
         *result = parse_move(&game, move);
         number_of_moves++;
         if (*result != DEFAULT)
-            puts(move_result_text[*result]);
+            printf("\n%s ", move_result_text[*result]);
         if (*result == ILLEGAL || *result == CHECKMATE || *result == DRAW)
             break;
     }
+    puts("");
 
     fclose(file);
     return number_of_moves;
@@ -74,6 +75,7 @@ int test_all()
     result -= test("check_can_block", 4, CHECK);
     result -= test("check_can_capture", 6, CHECK);
     result -= test("checkmate", 4, CHECKMATE);
+    result -= test("fifty_moves", 100, DRAW);
     if (result == 0)
         log_notice("--- All tests passed. ---");
     else if (result == 1)

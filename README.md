@@ -17,4 +17,6 @@ The common chess terminology (just in case):
 
   * file: vertical line of squares
   * rank: horizontal line of squares
-  * en passant: [the en passant capture](https://en.wikipedia.org/wiki/En_passant)
+  * [en passant](https://en.wikipedia.org/wiki/En_passant)
+  * [fifty-move rule](https://en.wikipedia.org/wiki/Fifty-move_rule)
+  * [threefold repetition](https://en.wikipedia.org/wiki/Threefold_repetition)

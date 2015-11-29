@@ -33,6 +33,7 @@ struct game {
     enum piece white_castling_avail; // QUEEN|KING for kingside and queenside
     enum piece black_castling_avail;
     int en_passant_file;
+    int halfmove_clock; // track fifty-move rule
 };
 
 struct square {
