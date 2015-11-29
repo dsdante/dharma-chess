@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "game.h"
 #include "log.h"
@@ -265,6 +266,11 @@ bool is_legal_move(const struct game *game, struct square from,
         return false;
     }
     
+    if (piece_at(game, from) == EMPTY) {
+        log_warning("Must move a piece");
+        return false;
+    }
+
     if ((piece_at(game, from) & COLOR) != game->side_to_move) {
         log_warning("Must move own piece");
         return false;
@@ -408,6 +414,13 @@ enum move_result move(struct game *game, struct square from, struct square to,
 
 enum move_result parse_move(struct game *game, char *move_str)
 {
+    // strip newline characters
+    int length = strcspn(move_str, "\r\n");
+    move_str[length] = '\0';
+    if (length < 4 || length > 5) {
+        log_warning("Incorrect move '%s'", move_str);
+        return ILLEGAL;
+    }
     for (int i = 0; move_str[i]; i++)  // lower case
         move_str[i] = tolower(move_str[i]);
 

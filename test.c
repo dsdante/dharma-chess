@@ -79,6 +79,7 @@ int test_all()
     result -= test("check_can_block", 4, CHECK);
     result -= test("check_can_capture", 6, CHECK);
     result -= test("checkmate", 4, CHECKMATE);
+    result -= test("threefold_repetition", 8, DRAW);
     result -= test("fifty-move", 100, DRAW);
     result -= test("fifty-move_checkmate", 104, CHECKMATE);
     if (result == 0)
