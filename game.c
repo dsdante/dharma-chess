@@ -114,7 +114,7 @@ bool bishop_has_way(const struct game *game, struct square from, struct square t
 
 bool rook_has_way(const struct game *game, struct square from, struct square to)
 {
-    if (from.file != to.file || from.rank != to.rank)
+    if (from.file != to.file && from.rank != to.rank)
         return false;
 
     if (from.file == to.file) {

@@ -66,7 +66,9 @@ int test(const char *test_name, int moves_expected, enum move_result result_expe
 int test_all()
 {
     int result = 0;
-    result -= test("fool", 4, CHECKMATE);
+    result -= test("castling", 10, DEFAULT);
+    result -= test("queenside_castling", 12, DEFAULT);
     result -= test("en_passant", 5, DEFAULT);
+    result -= test("fool", 4, CHECKMATE);
     return result;
 }

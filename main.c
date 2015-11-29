@@ -16,7 +16,7 @@ const struct option long_options[] = {
 };
 
 const char usage[] =
-    "Dharma Chess v0.0.1\n"
+    "Dharma Chess v0.0.2\n"
 #ifndef NDEBUG
     "DEBUG VERSION\n"
 #endif

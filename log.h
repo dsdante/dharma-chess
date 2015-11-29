@@ -19,6 +19,8 @@
 
 extern int logging_level;
 
+void break_debugger();
+
 void log_emerg(const char *format, ...);
 void log_alert(const char *format, ...);
 void log_crit(const char *format, ...);

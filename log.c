@@ -25,6 +25,11 @@ int logging_level = 3;
 int logging_level = 6;
 #endif
 
+void break_debugger()
+{
+    // Do nothing. Just make GDB break at this function.
+}
+
 void log_print(int level, const char *format, va_list args)
 {
     char message[2048];
