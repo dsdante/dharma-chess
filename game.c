@@ -337,7 +337,6 @@ bool can_make_any_move(const struct game *game)
  * Make a move, modifying the input game structure (if the move is legal) and
  * returning the result (default, check, checkmate, draw, or illegal move).
  */
-
 enum move_result move(struct game *game, struct square from, struct square to,
                       enum piece promotion)
 {
@@ -375,7 +374,8 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->en_passant_file = from.file;
     }
 
-    // reset halfmove clock
+    // track the fifty-move rule
+    game->halfmove_clock++;
     if (piece_at(game, from) & PAWN || piece_at(game, to) != EMPTY)
         game->halfmove_clock = 0;
 
@@ -385,7 +385,6 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if (promotion != EMPTY)
         game->board[to.file][to.rank] = ((promotion & ~COLOR) | game->side_to_move);
     game->side_to_move = (game->side_to_move == WHITE) ? BLACK : WHITE;
-    game->halfmove_clock++;
 
     // remove a pawn taken en passant
     if ((piece_at(game, from) & PAWN) && (from.file != to.file) &&
@@ -393,14 +392,14 @@ enum move_result move(struct game *game, struct square from, struct square to,
         game->board[to.file][from.rank] == EMPTY;
     }
 
-    if (game->halfmove_clock == 100)
-        return DRAW;
     if (!can_make_any_move(game)) {
         if (is_checked(game, game->side_to_move))
             return CHECKMATE;
         else
             return DRAW;
     }
+    if (game->halfmove_clock == 100)
+        return DRAW;
     if (is_checked(game, game->side_to_move))
         return CHECK;
         

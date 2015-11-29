@@ -13,6 +13,10 @@ int run_pgn(const char *filename)
     return -1;
 }
 
+/*
+ * Create a game, open raw moves file, play the game,
+ * place last move's result to [result], return the number of moves made
+ */
 int run_raw_file(const char *filename, enum move_result *result)
 {
     FILE *file = fopen(filename, "rb");
@@ -22,13 +26,13 @@ int run_raw_file(const char *filename, enum move_result *result)
     }
 
     *result = DEFAULT;
-    int number_of_moves = 0;
+    int halfmoves = 0;
     struct game game = setup;
     char move[6];
     while (fscanf(file, "%5s", move) == 1) {
         printf("%s ", move); 
         *result = parse_move(&game, move);
-        number_of_moves++;
+        halfmoves++;
         if (*result != DEFAULT)
             printf("\n%s ", move_result_text[*result]);
         if (*result == ILLEGAL || *result == CHECKMATE || *result == DRAW)
@@ -37,7 +41,7 @@ int run_raw_file(const char *filename, enum move_result *result)
     puts("");
 
     fclose(file);
-    return number_of_moves;
+    return halfmoves;
 }
 
 int test(const char *test_name, int moves_expected, enum move_result result_expected)
@@ -50,13 +54,13 @@ int test(const char *test_name, int moves_expected, enum move_result result_expe
     if (number_of_moves < 0) {
         log_err("Test '%s' failed", test_name);
         return -1;
-    } else if (result != result_expected) {
-        log_err("Test '%s' failed at move %d: expected %s, actual is %s. ", test_name,
-            number_of_moves, move_result_text[result_expected], move_result_text[result]);
-        return -1;
     } else if (number_of_moves != moves_expected) {
         log_err("Test '%s' failed: expected %d moves, actual is %d. ", test_name,
             moves_expected, number_of_moves);
+        return -1;
+    } else if (result != result_expected) {
+        log_err("Test '%s' failed at move %d: expected %s, actual is %s. ", test_name,
+            number_of_moves, move_result_text[result_expected], move_result_text[result]);
         return -1;
     } else {
         log_notice("Test '%s' passed.", test_name);
@@ -75,7 +79,8 @@ int test_all()
     result -= test("check_can_block", 4, CHECK);
     result -= test("check_can_capture", 6, CHECK);
     result -= test("checkmate", 4, CHECKMATE);
-    result -= test("fifty_moves", 100, DRAW);
+    result -= test("fifty-move", 100, DRAW);
+    result -= test("fifty-move_checkmate", 104, CHECKMATE);
     if (result == 0)
         log_notice("--- All tests passed. ---");
     else if (result == 1)
