@@ -69,6 +69,16 @@ int test_all()
     result -= test("castling", 10, DEFAULT);
     result -= test("queenside_castling", 12, DEFAULT);
     result -= test("en_passant", 5, DEFAULT);
-    result -= test("fool", 4, CHECKMATE);
+    result -= test("promotion", 11, DEFAULT);
+    result -= test("check_can_run_away", 6, CHECK);
+    result -= test("check_can_block", 4, CHECK);
+    result -= test("check_can_capture", 6, CHECK);
+    result -= test("checkmate", 4, CHECKMATE);
+    if (result == 0)
+        log_notice("--- All tests passed. ---");
+    else if (result == 1)
+        log_err("--- 1 test failed. ---");
+    else
+        log_err("--- %d tests failed. ---", result);
     return result;
 }
