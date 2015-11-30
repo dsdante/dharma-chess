@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <ctype.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,8 +44,8 @@ enum piece piece_at(const struct game *game, struct square square)
 } 
 
 /*
- * Get game hash, Zobrist algorithm.
- * Do not use the hash across program runs!
+ * Get the game hash, Zobrist algorithm
+ * The hash of a same game may differ across the program runs.
  */
 int hash(const struct game *game)
 {
@@ -68,7 +67,7 @@ int hash(const struct game *game)
         white_to_move_hash = rand();
         init = true;
     }
-break_debugger();
+
     int result = 0;
     struct square square;
     for (square.file = 0; square.file < 8; square.file++)
