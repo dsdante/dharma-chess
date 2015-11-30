@@ -34,7 +34,7 @@ struct game {
     enum piece black_castling_avail;
     int en_passant_file;
     int halfmove_clock; // track fifty-move rule
-    int position_history[256];
+    int position_history[256]; // keep hashes to track threefold repetition
 };
 
 struct square {

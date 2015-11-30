@@ -7,15 +7,9 @@
 #include "log.h"
 #include "test.h"
 
-int run_pgn(const char *filename)
-{
-    log_err("PGN parsing not implemented yet.");
-    return -1;
-}
-
 /*
- * Create a game, open raw moves file, play the game,
- * place last move's result to [result], return the number of moves made
+ * Create a game, open raw move file, play the game,
+ * place the last move's result to [result], return the number of moves made
  */
 int run_raw_file(const char *filename, enum move_result *result)
 {
@@ -82,6 +76,7 @@ int test_all()
     result -= test("threefold", 8, DRAW);
     result -= test("threefold_enpassant", 12, DEFAULT);
     result -= test("threefold_enpassant_cannot_capture", 9, DRAW);
+    result -= test("threefold_castling_availability", 20, DEFAULT);
     result -= test("fifty-move", 100, DRAW);
     result -= test("fifty-move_checkmate", 104, CHECKMATE);
     if (result == 0)
