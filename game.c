@@ -28,7 +28,6 @@ const struct game setup = {
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|QUEEN,  WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|QUEEN  },
         { WHITE|KING,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KING   },
-        //{ WHITE|KING,   WHITE|PAWN, 0, BLACK|KING, 0, 0, BLACK|PAWN,   },
         { WHITE|BISHOP, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|BISHOP },
         { WHITE|KNIGHT, WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|KNIGHT },
         { WHITE|ROOK,   WHITE|PAWN, 0, 0, 0, 0, BLACK|PAWN, BLACK|ROOK   } },
@@ -46,10 +45,70 @@ enum piece piece_at(const struct game *game, struct square square)
 } 
 
 /*
+ * Get game hash, Zobrist algorithm.
+ * Do not use the hash across program runs!
+ */
+int hash(const struct game *game)
+{
+    static bool init = false;
+    static int piece_hash[8][8][12];
+    static int en_passant_hash[8];
+    static int castling_avail_hash[4];
+    static int white_to_move_hash;
+    if (!init) {
+        srand(0);
+        for (int file = 0; file < 8; file++)
+        for (int rank = 0; rank < 8; rank++)
+        for (int piece = 0; piece < 12; piece++)
+            piece_hash[file][rank][piece] = rand();
+        for (int file = 0; file < 8; file++)
+            en_passant_hash[file] = rand();
+        for (int i = 0; i < 4; i++)
+            castling_avail_hash[i] = rand();
+        white_to_move_hash = rand();
+        init = true;
+    }
+break_debugger();
+    int result = 0;
+    struct square square;
+    for (square.file = 0; square.file < 8; square.file++)
+    for (square.rank = 0; square.rank < 8; square.rank++) {
+        int piece_number;
+        switch(piece_at(game, square)) {
+        case WHITE|PAWN:   result ^= piece_hash[square.file][square.rank][0];  break;
+        case WHITE|KNIGHT: result ^= piece_hash[square.file][square.rank][1];  break;
+        case WHITE|BISHOP: result ^= piece_hash[square.file][square.rank][2];  break;
+        case WHITE|ROOK:   result ^= piece_hash[square.file][square.rank][3];  break;
+        case WHITE|QUEEN:  result ^= piece_hash[square.file][square.rank][4];  break;
+        case WHITE|KING:   result ^= piece_hash[square.file][square.rank][5];  break;
+        case BLACK|PAWN:   result ^= piece_hash[square.file][square.rank][6];  break;
+        case BLACK|KNIGHT: result ^= piece_hash[square.file][square.rank][7];  break;
+        case BLACK|BISHOP: result ^= piece_hash[square.file][square.rank][8];  break;
+        case BLACK|ROOK:   result ^= piece_hash[square.file][square.rank][9];  break;
+        case BLACK|QUEEN:  result ^= piece_hash[square.file][square.rank][10]; break;
+        case BLACK|KING:   result ^= piece_hash[square.file][square.rank][11]; break;
+        }
+    } 
+    if (game->en_passant_file >= 0)
+        result ^= en_passant_hash[game->en_passant_file];
+    if (game->white_castling_avail & QUEEN)
+        result ^= castling_avail_hash[0];
+    if (game->white_castling_avail & KING)
+        result ^= castling_avail_hash[1];
+    if (game->black_castling_avail & QUEEN)
+        result ^= castling_avail_hash[2];
+    if (game->black_castling_avail & KING)
+        result ^= castling_avail_hash[3];
+    if (game->side_to_move == WHITE)
+        result ^= white_to_move_hash;
+
+    return result;
+}
+
+/*
  * Check the destination correctness and the free way to it.
  * We already know that there is no own piece in the destination.
  */
-
 bool pawn_has_way(const struct game *game, struct square from, struct square to)
 {
     assert((piece_at(game, from) & PIECE_TYPE) == PAWN && "checking not pawn");
@@ -349,6 +408,10 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if (!is_legal_move(game, from, to, promotion))
         return ILLEGAL;
 
+    // game setup position
+    if (game->halfmove_clock == 0)
+        game->position_history[0] = hash(game);
+
     // disabling castling
     if (from.file == 0 && from.rank == 0)
         game->white_castling_avail &= ~QUEEN;
@@ -397,6 +460,14 @@ enum move_result move(struct game *game, struct square from, struct square to,
             (piece_at(game, to) == EMPTY)) {
         game->board[to.file][from.rank] == EMPTY;
     }
+
+    game->position_history[game->halfmove_clock] = hash(game);
+    int repetitions = 0;
+    for (int move = 0; move <= game->halfmove_clock; move++)
+        if (game->position_history[move] == game->position_history[game->halfmove_clock])
+            repetitions++;
+    if (repetitions == 3)
+        return DRAW;
 
     if (!can_make_any_move(game)) {
         if (is_checked(game, game->side_to_move))

@@ -27,6 +27,7 @@ const char usage[] =
     "The game is still PvP only. Enter the moves in format \"e2 e4\"";
 
 const int max_move_length = 256;
+
 /*
 // Parse fuzzy format. Examples:
 // e2 e4

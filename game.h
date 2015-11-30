@@ -34,6 +34,7 @@ struct game {
     enum piece black_castling_avail;
     int en_passant_file;
     int halfmove_clock; // track fifty-move rule
+    int position_history[256];
 };
 
 struct square {
