@@ -72,14 +72,16 @@ int test_all()
 {
     int result = 0;
     result -= test("castling", 10, DEFAULT);
-    result -= test("queenside_castling", 12, DEFAULT);
+    result -= test("castling_queenside", 16, DEFAULT);
     result -= test("en_passant", 5, DEFAULT);
     result -= test("promotion", 11, DEFAULT);
     result -= test("check_can_run_away", 6, CHECK);
     result -= test("check_can_block", 4, CHECK);
     result -= test("check_can_capture", 6, CHECK);
     result -= test("checkmate", 4, CHECKMATE);
-    result -= test("threefold_repetition", 8, DRAW);
+    result -= test("threefold", 8, DRAW);
+    result -= test("threefold_enpassant", 12, DEFAULT);
+    result -= test("threefold_enpassant_cannot_capture", 9, DRAW);
     result -= test("fifty-move", 100, DRAW);
     result -= test("fifty-move_checkmate", 104, CHECKMATE);
     if (result == 0)

@@ -44,18 +44,17 @@ enum piece piece_at(const struct game *game, struct square square)
 } 
 
 /*
- * Get the game hash, Zobrist algorithm
+ * Get the game hash, the Zobrist algorithm
  * The hash of a same game may differ across the program runs.
  */
 int hash(const struct game *game)
 {
     static bool init = false;
-    static int piece_hash[8][8][12];
+    static int piece_hash[8][8][12]; // random nubers for each square-piece
     static int en_passant_hash[8];
     static int castling_avail_hash[4];
     static int white_to_move_hash;
     if (!init) {
-        srand(0);
         for (int file = 0; file < 8; file++)
         for (int rank = 0; rank < 8; rank++)
         for (int piece = 0; piece < 12; piece++)
@@ -72,7 +71,6 @@ int hash(const struct game *game)
     struct square square;
     for (square.file = 0; square.file < 8; square.file++)
     for (square.rank = 0; square.rank < 8; square.rank++) {
-        int piece_number;
         switch(piece_at(game, square)) {
         case WHITE|PAWN:   result ^= piece_hash[square.file][square.rank][0];  break;
         case WHITE|KNIGHT: result ^= piece_hash[square.file][square.rank][1];  break;
@@ -88,8 +86,24 @@ int hash(const struct game *game)
         case BLACK|KING:   result ^= piece_hash[square.file][square.rank][11]; break;
         }
     } 
-    if (game->en_passant_file >= 0)
-        result ^= en_passant_hash[game->en_passant_file];
+
+    // the position is different if a pawn can no longer be taken en passant
+    if (game->en_passant_file >= 0) {
+        enum piece moving_pawn = game->side_to_move | PAWN;
+        struct square en_passant_pawn;
+        en_passant_pawn.rank = game->side_to_move == WHITE ? 4 : 3;
+        en_passant_pawn.file = game->en_passant_file - 1;
+        if (en_passant_pawn.file >= 1 && piece_at(game, en_passant_pawn) == moving_pawn) {
+            result ^= en_passant_hash[game->en_passant_file];
+        } else {
+            en_passant_pawn.file = game->en_passant_file + 1;
+            if (en_passant_pawn.file <= 6 && piece_at(game, en_passant_pawn) == moving_pawn) {
+                result ^= en_passant_hash[game->en_passant_file];
+            }
+        }
+    }
+
+    // castling availability is accounted even if the king cannot castle at the moment
     if (game->white_castling_avail & QUEEN)
         result ^= castling_avail_hash[0];
     if (game->white_castling_avail & KING)
@@ -227,15 +241,9 @@ bool king_has_way(const struct game *game, struct square from, struct square to)
         for (int file = from.file + direction; file != rook.file; file += direction)
             if (game->board[file][from.rank] != EMPTY)
                 return false;
-        // cannot castle when the king, the rook, the new rook position,
-        // or the intermediate king position is checked
-        if (is_attacked(game, from) ||
-            is_attacked(game, rook) ||
-            is_attacked_by(game, to, opp_color) ||
-            is_attacked_by(game, rook_to, opp_color))
-        {
+        // cannot castle when old or intermediate king position is checked
+        if (is_attacked(game, from) || is_attacked_by(game, rook_to, opp_color))
             return false;
-        }
         return true;
     }
 
