@@ -51,6 +51,8 @@ int best_move(struct game *game, int depth,
                 *best_promotion = promotions[n_promotion];
             }
         }
+        if (n_promotion == 0)
+            break; // no need to check any promotions
     }
     return score_max;
 }
