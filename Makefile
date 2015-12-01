@@ -1,5 +1,8 @@
-dchess: main.o game.o log.o test.o
-	gcc $(CFLAGS) -o dchess main.o game.o log.o test.o
+dchess: main.o ai.o game.o log.o test.o
+	gcc $(CFLAGS) -o dchess ai.o main.o game.o log.o test.o
+
+ai.o: ai.c ai.h game.h
+	gcc $(CFLAGS) -c -std=c11 ai.c
 
 game.o: game.c game.h log.h
 	gcc $(CFLAGS) -c -std=c11 game.c
