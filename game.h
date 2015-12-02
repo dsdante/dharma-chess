@@ -45,6 +45,8 @@ struct square {
 extern const struct game setup; // starting position
 extern const char *move_result_text[];
 
+enum piece piece_at(const struct game *game, struct square square);
+bool piece_has_way(const struct game *game, struct square from, struct square to);
 bool is_legal_move(const struct game *game, struct square from,
                    struct square to, enum piece promotion);
 enum move_result move(struct game *game, struct square from,
