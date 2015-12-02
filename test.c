@@ -66,13 +66,13 @@ int test_perft(struct game *game, int depth, int result_expected)
 {
     struct square from, to;
     enum piece promotion;
-    int score = best_move(game, 0, &from, &to, &promotion);
-    printf("score %d, move %c%d%c%d %d", score, from.file + 'a', from.rank + 1, to.file + 'a', to.rank + 1, promotion);
+    int score = best_move(game, depth, &from, &to, &promotion);
+    printf("score %d, move %c%d%c%d %d\n", score, from.file + 'a', from.rank + 1, to.file + 'a', to.rank + 1, promotion);
     if (perft == result_expected) {
-        log_notice("A perft test passed.");
+        log_notice("A perft(%d) test passed.", depth);
         return 0;
     } else {
-        log_err("A perft test failed.");
+        log_err("A perft(%d) test failed.", depth);
         return -1;
     }
 }
@@ -100,6 +100,9 @@ int test_all()
     // perft
     struct game game = setup;
     result -= test_perft(&game, 0, 1);
+    result -= test_perft(&game, 1, 20);
+    result -= test_perft(&game, 2, 400);
+    result -= test_perft(&game, 3, 8902);
 
     if (result == 0)
         log_notice("--- All tests passed. ---");

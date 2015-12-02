@@ -333,12 +333,12 @@ bool is_legal_move(const struct game *game, struct square from,
     }
     
     if (piece_at(game, from) == EMPTY) {
-        log_warning("Must move a piece");
+        //log_warning("Must move a piece");
         return false;
     }
 
     if ((piece_at(game, from) & COLOR) != game->side_to_move) {
-        log_warning("Must move own piece");
+        //log_warning("Must move own piece");
         return false;
     }
 
