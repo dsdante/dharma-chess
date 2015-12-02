@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "game.h"
+#include "ai.h"
 #include "log.h"
 #include "test.h"
 
@@ -38,7 +38,7 @@ int run_raw_file(const char *filename, enum move_result *result)
     return halfmoves;
 }
 
-int test(const char *test_name, int moves_expected, enum move_result result_expected)
+int test_game(const char *test_name, int moves_expected, enum move_result result_expected)
 {
     printf("Running test '%s'\n", test_name);
     char filename[256] = "tests/";
@@ -62,23 +62,45 @@ int test(const char *test_name, int moves_expected, enum move_result result_expe
     }
 }
 
+int test_perft(struct game *game, int depth, int result_expected)
+{
+    struct square from, to;
+    enum piece promotion;
+    int score = best_move(game, 0, &from, &to, &promotion);
+    printf("score %d, move %c%d%c%d %d", score, from.file + 'a', from.rank + 1, to.file + 'a', to.rank + 1, promotion);
+    if (perft == result_expected) {
+        log_notice("A perft test passed.");
+        return 0;
+    } else {
+        log_err("A perft test failed.");
+        return -1;
+    }
+}
+
 int test_all()
 {
     int result = 0;
-    result -= test("castling", 10, DEFAULT);
-    result -= test("castling_queenside", 16, DEFAULT);
-    result -= test("en_passant", 5, DEFAULT);
-    result -= test("promotion", 11, DEFAULT);
-    result -= test("check_can_run_away", 6, CHECK);
-    result -= test("check_can_block", 4, CHECK);
-    result -= test("check_can_capture", 6, CHECK);
-    result -= test("checkmate", 4, CHECKMATE);
-    result -= test("threefold", 8, DRAW);
-    result -= test("threefold_enpassant", 12, DEFAULT);
-    result -= test("threefold_enpassant_cannot_capture", 9, DRAW);
-    result -= test("threefold_castling_availability", 20, DEFAULT);
-    result -= test("fifty-move", 100, DRAW);
-    result -= test("fifty-move_checkmate", 104, CHECKMATE);
+
+    // games
+    result -= test_game("castling", 10, DEFAULT);
+    result -= test_game("castling_queenside", 16, DEFAULT);
+    result -= test_game("en_passant", 5, DEFAULT);
+    result -= test_game("promotion", 11, DEFAULT);
+    result -= test_game("check_can_run_away", 6, CHECK);
+    result -= test_game("check_can_block", 4, CHECK);
+    result -= test_game("check_can_capture", 6, CHECK);
+    result -= test_game("checkmate", 4, CHECKMATE);
+    result -= test_game("threefold", 8, DRAW);
+    result -= test_game("threefold_enpassant", 12, DEFAULT);
+    result -= test_game("threefold_enpassant_cannot_capture", 9, DRAW);
+    result -= test_game("threefold_castling_availability", 20, DEFAULT);
+    result -= test_game("fifty-move", 100, DRAW);
+    result -= test_game("fifty-move_checkmate", 104, CHECKMATE);
+
+    // perft
+    struct game game = setup;
+    result -= test_perft(&game, 0, 1);
+
     if (result == 0)
         log_notice("--- All tests passed. ---");
     else if (result == 1)

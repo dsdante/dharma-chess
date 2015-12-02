@@ -8,7 +8,7 @@ const int value_knight = 3000;
 const int value_bishop = 3100;
 const int value_rook = 5000;
 const int value_queen = 9000;
-const int value_king = 20000;
+const int value_king = 200000;
 const int value_move = 50; // the more, the more positional is playing
 
 const enum piece promotions[] = {
@@ -19,6 +19,8 @@ const enum piece promotions[] = {
     QUEEN,
 };
 
+int perft; // Number of positions at the specified depth. Not thread safe.
+
 int evaluate(struct game *game)
 {
     int result = 0;
@@ -26,10 +28,11 @@ int evaluate(struct game *game)
     struct square square;
     for (square.file = 0; square.file < 8; square.file++)
     for (square.rank = 0; square.rank < 8; square.rank++) {
+        enum piece piece = piece_at(game, square);
         int piece_value = 0;
        
         // count piece values
-        switch (piece_at(game, square) & PIECE_TYPE) {
+        switch (piece & PIECE_TYPE) {
         case PAWN:   piece_value = value_pawn; break;
         case KNIGHT: piece_value = value_knight; break;
         case BISHOP: piece_value = value_bishop; break;
@@ -41,10 +44,10 @@ int evaluate(struct game *game)
         struct square to;
         for (to.file = 0; to.file < 8; to.file++)
         for (to.rank = 0; to.rank < 8; to.rank++)
-            if (piece_has_way(game, square, to))
+            if (piece != EMPTY && piece_has_way(game, square, to))
                 result += value_move;
 
-        if (piece_at(game, square) & COLOR != game->side_to_move)
+        if (piece & COLOR != game->side_to_move)
             piece_value = -piece_value;
         result += piece_value;
     }
@@ -58,8 +61,13 @@ int evaluate(struct game *game)
 int best_move(struct game *game, int depth,
         struct square *best_from, struct square *best_to, enum piece *best_promotion)
 {
-    if (depth == 0)
+    if (best_to != NULL) // root call
+        perft = 0;
+
+    if (depth == 0) {
+        perft++;
         return evaluate(game);
+    }
 
     int score_max = INT_MIN;
     struct square from, to;
