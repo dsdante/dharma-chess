@@ -92,7 +92,7 @@ int test_all()
     result -= test_game("check_can_block", 4, CHECK);
     result -= test_game("check_can_capture", 6, CHECK);
     result -= test_game("checkmate", 4, CHECKMATE);
-    result -= test_game("not_enough_material", 40, DRAW);
+    result -= test_game("insufficient_material", 40, DRAW);
     result -= test_game("threefold", 8, DRAW);
     result -= test_game("threefold_enpassant", 12, DEFAULT);
     result -= test_game("threefold_enpassant_cannot_capture", 9, DRAW);
