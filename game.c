@@ -405,6 +405,42 @@ bool can_make_any_move(const struct game *game)
     return false;
 }
 
+bool enough_material(struct game *game)
+{
+    int w_knights = 0, w_bishops = 0;
+    int b_knights = 0, b_bishops = 0;
+    struct square square;
+    for (square.file = 0; square.file < 8; square.file++)
+    for (square.rank = 0; square.rank < 8; square.rank++) {
+        switch (piece_at(game, square)) {
+        case WHITE|PAWN:
+        case WHITE|ROOK:
+        case WHITE|QUEEN:
+        case BLACK|ROOK:
+        case BLACK|PAWN:
+        case BLACK|QUEEN:
+            return true;
+        case WHITE|KNIGHT:
+            w_knights++;
+            break;
+        case BLACK|KNIGHT:
+            b_knights++;
+            break;
+        case WHITE|BISHOP:
+            w_bishops++;
+            break;
+        case BLACK|BISHOP:
+            b_bishops++;
+            break;
+        }
+    }
+    if (w_bishops >= 2 || b_bishops >= 2)
+        return true;
+    if ((w_bishops == 1 && w_knights >= 1) || (b_bishops == 1 && b_knights >= 1))
+        return true;
+    return false;
+}
+
 /*
  * Make a move, modifying the input game structure (if the move is legal) and
  * returning the result (default, check, checkmate, draw, or illegal move).
@@ -476,6 +512,8 @@ enum move_result move(struct game *game, struct square from, struct square to,
     if (repetitions == 3)
         return DRAW;
 
+    if (!enough_material(game))
+        return DRAW;
     if (!can_make_any_move(game)) {
         if (is_checked(game, game->side_to_move))
             return CHECKMATE;
@@ -502,7 +540,6 @@ enum move_result parse_move(struct game *game, char *move_str)
     for (int i = 0; move_str[i]; i++)  // lower case
         move_str[i] = tolower(move_str[i]);
 
-    // TODO: make the input format less strict
     struct square from, to;
     enum piece promotion = EMPTY;
     from.file = move_str[0] - 'a';

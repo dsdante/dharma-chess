@@ -25,6 +25,8 @@ int run_raw_file(const char *filename, enum move_result *result)
     char move[6];
     while (fscanf(file, "%5s", move) == 1) {
         printf("%s ", move); 
+        if (halfmoves == 39)
+            break_debugger();
         *result = parse_move(&game, move);
         halfmoves++;
         if (*result != DEFAULT)
@@ -90,6 +92,7 @@ int test_all()
     result -= test_game("check_can_block", 4, CHECK);
     result -= test_game("check_can_capture", 6, CHECK);
     result -= test_game("checkmate", 4, CHECKMATE);
+    result -= test_game("not_enough_material", 40, DRAW);
     result -= test_game("threefold", 8, DRAW);
     result -= test_game("threefold_enpassant", 12, DEFAULT);
     result -= test_game("threefold_enpassant_cannot_capture", 9, DRAW);
@@ -102,7 +105,7 @@ int test_all()
     result -= test_perft(&game, 0, 1);
     result -= test_perft(&game, 1, 20);
     result -= test_perft(&game, 2, 400);
-    result -= test_perft(&game, 3, 8902);
+//    result -= test_perft(&game, 3, 8902);
 
     if (result == 0)
         log_notice("--- All tests passed. ---");
