@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ai.h"
 #include "game.h"
 #include "log.h"
 #include "test.h"
@@ -24,7 +25,7 @@ const char usage[] =
     "  -h, --help               display this help and exit\n"
     "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)\n"
     "  -t, --test               run tests\n"
-    "The game is still PvP only. Enter the moves in format \"e2 e4\"";
+    "Enter moves like e2e4 or e7e8q (with promotion).";
 
 const int max_move_length = 256;
 
@@ -113,16 +114,31 @@ void run_game()
     log_info("Game started");
     struct game game = setup;
     do {
-        if (game.side_to_move == WHITE)
-            puts("White's move: ");
-        else
-            puts("Black's move: ");
+        enum move_result result;
+        if (game.side_to_move == WHITE) {
+            puts("Your move: ");
+            char move_str[max_move_length];
+            fgets(move_str, max_move_length, stdin);
+            if (move_str[0] == 'q')  // quit
+                break;
+            result = parse_move(&game, move_str);
+        } else {
+            struct square from, to;
+            enum piece promotion;
+            best_move(&game, 2, &from, &to, &promotion);
+            char promotion_char;
+            switch (promotion) {
+            case EMPTY:  promotion_char = ' '; break;
+            case KNIGHT: promotion_char = 'N'; break;
+            case BISHOP: promotion_char = 'B'; break;
+            case ROOK:   promotion_char = 'R'; break;
+            case QUEEN:  promotion_char = 'Q'; break;
+            }
+            printf("Computer's move: %c%d%c%d%c\n", from.file + 'a', from.rank + 1,
+                    to.file + 'a', to.rank + 1, promotion_char);
+            result = move(&game, from, to, promotion);
+        }
 
-        char move_str[max_move_length];
-        fgets(move_str, max_move_length, stdin);
-        if (move_str[0] == 'q')  // quit
-            break;
-        enum move_result result = parse_move(&game, move_str);
         if (result == CHECK) {
             puts("Check!");
         } else if (result == CHECKMATE) {
@@ -138,6 +154,7 @@ void run_game()
             puts("Illegal move.");
             continue;
         }
+
     } while (true);
 }
 

@@ -2,14 +2,15 @@
 #include <stddef.h>
 
 #include "ai.h"
+#include "log.h"
 
-const int value_pawn = 1000;
+const int value_pawn   = 1000;
 const int value_knight = 3000;
 const int value_bishop = 3100;
-const int value_rook = 5000;
-const int value_queen = 9000;
-const int value_king = 200000;
-const int value_move = 50; // the more, the more positional is playing
+const int value_rook   = 5000;
+const int value_queen  = 9000;
+const int value_king   = 200000;
+const int value_move   = 50; // the more, the more positional is playing
 
 const enum piece promotions[] = {
     EMPTY,
@@ -28,23 +29,25 @@ int evaluate(struct game *game, enum piece color)
     int result = 0;
 
     struct square square;
+    break_debugger();
     for (square.file = 0; square.file < 8; square.file++)
     for (square.rank = 0; square.rank < 8; square.rank++) {
         int piece_value = 0;
         const enum piece piece = piece_at(game, square);
-        if (piece & COLOR != color)
+        if ((piece == EMPTY) || (piece & COLOR != color))
             continue;
+        enum piece piece_type = piece & PIECE_TYPE;
 
-        switch (piece & PIECE_TYPE) {
-        case PAWN:   piece_value = value_pawn; break;
+        switch (piece_type) {
+        case PAWN:   piece_value = value_pawn;   break;
         case KNIGHT: piece_value = value_knight; break;
         case BISHOP: piece_value = value_bishop; break;
-        case ROOK:   piece_value = value_rook; break;
-        case QUEEN:  piece_value = value_queen; break;
+        case ROOK:   piece_value = value_rook;   break;
+        case QUEEN:  piece_value = value_queen;  break;
         }
 
         // count possible moves
-        if (piece & PIECE_TYPE != PAWN) {
+        if (piece_type != PAWN && piece_type != KING) {
             struct square to;
             for (to.file = 0; to.file < 8; to.file++)
             for (to.rank = 0; to.rank < 8; to.rank++)
@@ -105,5 +108,8 @@ int best_move(struct game *game, int depth,
         if (n_promotion == 0)
             break; // no need to check any promotions
     }
+    if (best_from != NULL)
+        log_notice("Move %c%d%c%d %d scores %d", best_from->file + 'a', best_from->rank + 1,
+                best_to->file + 'a', best_to->rank + 1, *best_promotion, score_max);
     return score_max;
 }

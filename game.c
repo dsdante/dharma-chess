@@ -362,7 +362,7 @@ bool is_legal_move(const struct game *game, struct square from,
         case QUEEN:
             break;
         default:
-            log_warning("Promotion not specified");
+            //log_warning("Promotion not specified");
             return false;
         }
     }
