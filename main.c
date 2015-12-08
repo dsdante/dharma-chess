@@ -8,11 +8,13 @@
 #include "game.h"
 #include "log.h"
 #include "test.h"
+#include "uci.h"
 
 const struct option long_options[] = {
     { "help", no_argument, NULL, 'h' },
-    { "log-level", required_argument, NULL, 'l' },
+    { "console", no_argument, NULL, 'c' },
     { "test", optional_argument, NULL, 't' },
+    { "log-level", required_argument, NULL, 'l' },
     { },
 };
 
@@ -23,8 +25,9 @@ const char usage[] =
 #endif
     "Usage: dchess [OPTION...]\n"
     "  -h, --help               display this help and exit\n"
+    "  -c, --console            console user interface (UCI protocol otherwise)\n"
+    "  -t, --test               run tests and benchmarks\n"
     "  -l, --log-level=LEVEL    console logging verbosity, from -1 (none) to 7 (debug)\n"
-    "  -t, --test               run tests\n"
     "Enter moves like e2e4 or e7e8q (with promotion).";
 
 const int max_move_length = 256;
@@ -163,7 +166,7 @@ int main(int argc, char **argv)
     // Parse the command line arguments
     int arg = 0;
     do {
-        arg = getopt_long(argc, argv, "hl:t::", long_options, NULL);
+        arg = getopt_long(argc, argv, "hcl:t::", long_options, NULL);
         switch (arg) {
         case -1:
             break; 
@@ -172,12 +175,16 @@ int main(int argc, char **argv)
             puts(usage);
             exit(0); 
 
-        case 'l':
-            logging_level = atoi(optarg);
-            break;
+        case 'c':
+            run_game();
+            return 0;
 
         case 't':
             exit(test_all());
+
+        case 'l':
+            logging_level = atoi(optarg);
+            break;
 
         default:
             puts(usage);
@@ -186,7 +193,7 @@ int main(int argc, char **argv)
     }
     while (arg != -1);
 
-    run_game();
+    uci_loop();
 
     return 0;
 }

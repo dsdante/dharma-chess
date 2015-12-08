@@ -7,8 +7,8 @@
 #include "game.h"
 
 const char delimiters[]  = " \t\r\n";
+const size_t buffer_size = 256;
 
-// Execute "position" UCI command, modify game if needed
 void uci_position(struct game *game, char *command)
 {
     // input command is now like:
@@ -113,22 +113,24 @@ void uci_go(struct game *game, char *command)
     case ROOK:   move[4] = 'r'; break;
     case QUEEN:  move[4] = 'q'; break;
     }
-    printf("bestmove %s", move);
+    printf("bestmove %s\n", move);
 }
 
 void uci_loop()
 {
     struct game game = setup;
-    char *buffer = NULL;
-    size_t buffer_size;
+    char buffer[buffer_size];
     bool quit = false;
 
     while (!quit) {
         // read user's input
-        getline(&buffer, &buffer_size, stdin);
+        fgets(buffer, buffer_size, stdin);
         char *token = strtok(buffer, delimiters); 
         do {
-            if (strcmp(token, "uci") == 0) {
+            if (token == NULL) {
+                // do nothing
+
+            } else if (strcmp(token, "uci") == 0) {
                 puts("id name Dharma Chess");
                 puts("id author Dmitry Fedorkov"); 
                 puts("uciok"); 
@@ -171,5 +173,4 @@ void uci_loop()
             } 
         } while(false);
     }
-    free(buffer);
 }
