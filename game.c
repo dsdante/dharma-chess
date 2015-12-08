@@ -38,6 +38,96 @@ const struct game setup = {
     .halfmove_clock = 0,
 };
 
+// Convert Forsyth-Edwards notation (FEN) to game
+// Returns *game that must be freed manually
+// Return NULL on incorrect FEN format
+struct game* fen_to_game(char *fen)
+{
+    struct game* result = malloc(sizeof(struct game));
+    memset(result, 0, sizeof(struct game));
+    int file = 0, rank = 7;
+    int i = -1;
+
+    while (fen[++i] != ' ') {
+        if (fen[i] == '/') {
+            rank--;
+            file = 0;
+            continue;
+        }
+
+        if (file > 7 || rank < 0)
+            goto ERROR;
+
+        if (fen[i] >= '1' && fen[i] <= '8') {
+            file += fen[i] - '0';
+            continue;
+        }
+
+        switch (fen[i]) {
+        case 'P': result->board[file][rank] = WHITE|PAWN;   break;
+        case 'N': result->board[file][rank] = WHITE|KNIGHT; break;
+        case 'B': result->board[file][rank] = WHITE|BISHOP; break;
+        case 'R': result->board[file][rank] = WHITE|ROOK;   break;
+        case 'Q': result->board[file][rank] = WHITE|QUEEN;  break;
+        case 'K': result->board[file][rank] = WHITE|KING;   break;
+        case 'p': result->board[file][rank] = BLACK|PAWN;   break;
+        case 'n': result->board[file][rank] = BLACK|KNIGHT; break;
+        case 'b': result->board[file][rank] = BLACK|BISHOP; break;
+        case 'r': result->board[file][rank] = BLACK|ROOK;   break;
+        case 'q': result->board[file][rank] = BLACK|QUEEN;  break;
+        case 'k': result->board[file][rank] = BLACK|KING;   break;
+        default: goto ERROR;
+        }
+
+        file++;
+    }
+
+    switch (fen[++i]) {
+    case 'w': result->side_to_move = WHITE; break;
+    case 'b': result->side_to_move = BLACK; break;
+    default: goto ERROR;
+    }
+
+    if (fen[++i] != ' ')
+        goto ERROR;
+
+    while (fen[++i] != ' ') {
+        switch (fen[i]) {
+        case '-': break;
+        case 'K': result->white_castling_avail |= KING;  break;
+        case 'Q': result->white_castling_avail |= QUEEN; break;
+        case 'k': result->black_castling_avail |= KING;  break;
+        case 'q': result->black_castling_avail |= QUEEN; break;
+        default: goto ERROR;
+        }
+    }
+
+    i++;
+    if (fen[i] >= 'a' && fen[i] <= 'h') {
+        result->en_passant_file = fen[i] - 'a';
+        if (result->en_passant_file < 0 || result->en_passant_file > 7)
+            goto ERROR;
+        i++;
+        if (fen[i] < '1' || fen[i] > '8')
+            goto ERROR;
+    } else {
+        if (fen[i] != '-')
+            goto ERROR;
+    }
+
+    i += 2;
+    if (sscanf(fen + i, "%d", &(result->halfmove_clock)) != 1)
+        goto ERROR;
+    if (result->halfmove_clock < 0 || result->halfmove_clock > 100)
+        goto ERROR;
+
+    return result; 
+
+ERROR:
+    free(result);
+    return NULL;
+}
+
 enum piece piece_at(const struct game *game, struct square square)
 {
     return game->board[square.file][square.rank]; 
