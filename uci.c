@@ -4,10 +4,9 @@
 #include <string.h>
 
 #include "ai.h"
-#include "game.h"
 
 const char delimiters[]  = " \t\r\n";
-const size_t buffer_size = 256;
+const size_t buffer_size = 256; // TODO: make dynamic
 
 void uci_position(struct game *game, char *command)
 {
@@ -116,61 +115,65 @@ void uci_go(struct game *game, char *command)
     printf("bestmove %s\n", move);
 }
 
+// Returns true on quit command
+bool uci(struct game *game, char *command)
+{
+    char *token = strtok(command, delimiters); 
+    do {
+        if (token == NULL) {
+            // do nothing
+
+        } else if (strcmp(token, "uci") == 0) {
+            puts("id name Dharma Chess");
+            puts("id author Dmitry Fedorkov"); 
+            puts("uciok"); 
+
+        } else if (strcmp(token, "debug") == 0) {
+            // not implemented yet
+
+        } else if (strcmp(token, "isready") == 0) {
+            puts("readyok");
+
+        } else if (strcmp(token, "setoption") == 0) {
+            // no options supported
+
+        } else if (strcmp(token, "register") == 0) {
+            // no registration
+
+        } else if (strcmp(token, "ucinewgame") == 0) {
+            // do nothing
+
+        } else if (strcmp(token, "position") == 0) {
+            uci_position(game, command);
+
+        } else if (strcmp(token, "go") == 0) {
+            uci_go(game, command);
+
+        } else if (strcmp(token, "stop") == 0) {
+            // do nothing
+
+        } else if (strcmp(token, "ponderhit") == 0) {
+            // do nothing
+
+        } else if (strcmp(token, "quit") == 0) {
+            return true;
+
+        } else {
+            // skip tokens until EOL or a valid command is found
+            if (token = strtok(NULL, delimiters))
+                continue;
+            // ignore invalid commands
+        }
+    } while(false);
+
+    return false;
+}
+
 void uci_loop()
 {
     struct game game = setup;
     char buffer[buffer_size];
-    bool quit = false;
-
-    while (!quit) {
-        // read user's input
+    do {
         fgets(buffer, buffer_size, stdin);
-        char *token = strtok(buffer, delimiters); 
-        do {
-            if (token == NULL) {
-                // do nothing
-
-            } else if (strcmp(token, "uci") == 0) {
-                puts("id name Dharma Chess");
-                puts("id author Dmitry Fedorkov"); 
-                puts("uciok"); 
-
-            } else if (strcmp(token, "debug") == 0) {
-                // not implemented yet
-
-            } else if (strcmp(token, "isready") == 0) {
-                puts("readyok");
-
-            } else if (strcmp(token, "setoption") == 0) {
-                // no options supported
-
-            } else if (strcmp(token, "register") == 0) {
-                // no registration
-
-            } else if (strcmp(token, "ucinewgame") == 0) {
-                // do nothing
-
-            } else if (strcmp(token, "position") == 0) {
-                uci_position(&game, buffer);
-
-            } else if (strcmp(token, "go") == 0) {
-                uci_go(&game, buffer);
-
-            } else if (strcmp(token, "stop") == 0) {
-                // do nothing
-
-            } else if (strcmp(token, "ponderhit") == 0) {
-                // do nothing
-
-            } else if (strcmp(token, "quit") == 0) {
-                quit = true;
-
-            } else {
-                // skip tokens until EOL or a valid command is found
-                if (token = strtok(NULL, delimiters))
-                    continue;
-                // ignore invalid commands
-            } 
-        } while(false);
-    }
+    } while (!uci(&game, buffer));
 }

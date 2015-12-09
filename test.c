@@ -6,6 +6,7 @@
 #include "ai.h"
 #include "log.h"
 #include "test.h"
+#include "uci.h"
 
 /*
  * Create a game, open raw move file, play the game,
@@ -14,7 +15,7 @@
 int run_raw_file(const char *filename, enum move_result *result)
 {
     FILE *file = fopen(filename, "rb");
-    if (!file) {
+    if (file == NULL) {
         log_err("Cannot open file '%s': %s", filename, strerror(errno));
         return errno;
     }
@@ -51,11 +52,11 @@ int test_game(const char *test_name, int moves_expected, enum move_result result
         log_err("Test '%s' failed", test_name);
         return -1;
     } else if (number_of_moves != moves_expected) {
-        log_err("Test '%s' failed: expected %d moves, actual is %d. ", test_name,
+        log_err("Test '%s' failed: expected %d moves, actual is %d.", test_name,
             moves_expected, number_of_moves);
         return -1;
     } else if (result != result_expected) {
-        log_err("Test '%s' failed at move %d: expected %s, actual is %s. ", test_name,
+        log_err("Test '%s' failed at move %d: expected %s, actual is %s.", test_name,
             number_of_moves, move_result_text[result_expected], move_result_text[result]);
         return -1;
     } else {
@@ -75,6 +76,37 @@ int test_perft(struct game *game, int depth, int result_expected)
         return 0;
     } else {
         log_err("A perft(%d) test failed.", depth);
+        return -1;
+    }
+}
+
+int test_uci(const char *test_name, int commands_expected)
+{
+    printf("Running test '%s'\n", test_name);
+    char filename[256] = "tests/";
+    strcat(filename, test_name);
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        log_err("Cannot open file '%s': %s", filename, strerror(errno));
+        return -1;
+    }
+
+    struct game game = setup;
+    char command[256];
+    int commands_actual = 0;
+    while (fgets(command, 256, file) != NULL) {
+        commands_actual++;
+        if (uci(&game, command)) 
+            break;
+    }
+
+    fclose(file);
+    if (commands_actual == commands_expected) {
+        log_notice("Test '%s' passed.", test_name);
+        return 0;
+    } else {
+        log_err("Test '%s' failed: expected %d commands, actual is %d.", test_name,
+                commands_expected, commands_actual);
         return -1;
     }
 }
@@ -99,6 +131,9 @@ int test_all()
     result -= test_game("threefold_castling_availability", 20, DEFAULT);
     result -= test_game("fifty-move", 100, DRAW);
     result -= test_game("fifty-move_checkmate", 104, CHECKMATE);
+
+    // UCI
+    result -= test_uci("uci_basic", 5);
 
     // perft
     struct game game = setup;
